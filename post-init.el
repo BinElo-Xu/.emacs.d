@@ -22,6 +22,13 @@
 ;; evil relative configuration.
 (require 'init-evil)
 
+;; Evil-style keybindings for the minibuffer (candidate navigation, editing
+;; keys).  It has to be loaded after init-completion (Vertico) and init-evil.
+(require 'init-minibuffer)
+
+;; visual-line-mode and visual-fill-column for prose buffers.
+(require 'init-visual-line)
+
 ;; org-mode configuration.
 (require 'init-org)
 

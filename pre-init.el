@@ -5,9 +5,10 @@
 ;; set the relative line number. 
 (setq display-line-numbers-type 'relative)
 
-;; emacs clipborad integration
-(setq select-enable-clipboard t)
-
 ;; relative number only open when programming.
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
+;; set the global fill-column-indicator
+(global-display-fill-column-indicator-mode 1)
+
+;; pre-init.el ends here.

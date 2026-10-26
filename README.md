@@ -12,7 +12,7 @@
 ├── init.el                 # minimal-emacs.d，上游文件，不修改
 ├── pre-early-init.el       # 将 user-emacs-directory 重定向到 var/
 ├── post-early-init.el
-├── pre-init.el             # 加载路径、行号、基础剪贴板设置
+├── pre-init.el             # 加载路径、行号、fill-column 指示线
 ├── post-init.el            # 按顺序加载 var/init-lisp/ 下的模块
 ├── custom.el               # Customize 写入的配置
 ├── var/
@@ -23,6 +23,8 @@
 │   │   ├── init-file.el
 │   │   ├── init-completion.el
 │   │   ├── init-evil.el
+│   │   ├── init-minibuffer.el   # minibuffer 的 Evil 风格按键
+│   │   ├── init-visual-line.el  # 视觉行换行
 │   │   └── init-org.el
 │   ├── elpa/               # 安装的包（不纳入 Git）
 │   ├── eln-cache/          # 原生编译缓存（不纳入 Git）
@@ -65,7 +67,69 @@ M-x package-refresh-contents
 4. `init-file`：`recentf`、`savehist`、`saveplace`、`auto-revert`
 5. `init-completion`：Corfu、Cape、Vertico、Marginalia、Orderless、Embark
 6. `init-evil`：Evil 及相关扩展
-7. `init-org`：Org、Org-roam、Org-roam-ui、Consult 集成
+7. `init-minibuffer`：minibuffer 的 Evil 风格按键
+8. `init-visual-line`：`visual-line-mode` 与 `visual-fill-column`
+9. `init-org`：Org、Org-roam、Org-roam-ui、Consult 集成
+
+## 视觉换行
+
+`var/init-lisp/init-visual-line.el` 使用 `visual-line-mode` 和
+`visual-fill-column` 管理视觉行的换行：
+
+- `pre-init.el` 启用 `global-display-fill-column-indicator-mode`；
+- `init-visual-line.el` 将 `display-fill-column-indicator-column` 明确设为
+  `t`，因此指示线始终使用当前缓冲区的 `fill-column`；
+- `visual-fill-column-width` 保持为 `nil`，表示 visual-fill-column 也使用
+  同一个缓冲区局部的 `fill-column`。这样换行位置和指示线始终一致；
+- `visual-fill-column` 随 `visual-line-mode` 一起启用和关闭；
+- 只在 `text-mode` 派生缓冲区（包括 Org 笔记）中启用 `visual-line-mode`。
+  编程缓冲区仍保留 minimal-emacs.d 的 `truncate-lines t`，不会把代码行折行；
+- 在 `init-evil.el` 中设置了 `evil-respect-visual-line-mode`。在启用
+  `visual-line-mode` 的缓冲区中，`j`/`k` 按视觉行移动，`gj`/`gk` 按逻辑行
+  移动，避免把一整段软换行文本当成一行而直接跳过；
+- 当窗口宽度小于 `fill-column` 时，`fill-column` 会自动收缩到窗口可用宽度，
+  使指示线和换行位置都保持在窗口内。窗口重新变宽后恢复原来的 `fill-column`
+  （默认 80）。如果同一个缓冲区同时显示在多个窗口中，使用最窄窗口的宽度，
+  以保证所有窗口都能显示指示线。
+
+默认 `fill-column` 为 80，因此文本会在第 80 列处换行。各模式可以在启用
+`visual-line-mode` 之前设置缓冲区局部的 `fill-column`，指示线和换行位置会使用
+同一个值。
+
+## Minibuffer
+
+`var/init-lisp/init-minibuffer.el` 让 minibuffer 在保留 Evil 状态机的同时，拥有
+适合命令行输入的按键。`init-evil.el` 中的 `evil-collection-setup-minibuffer`
+会把每个新的 minibuffer 置于 Evil 的 insert state，因此 Evil 插入模式的绑定会
+覆盖 Emacs 的编辑键（例如 `C-a`、`C-e`、`C-k`、`C-n`、`C-p`）。这些命令在普通
+缓冲区中有用，但在单行 minibuffer 中会妨碍输入和候选切换。
+
+配置使用 Evil 的 auxiliary keymap（辅助键位表），只在这些 minibuffer 键位表中
+覆盖按键，不改变 Evil 在其它缓冲区中的行为：
+
+| 按键 | 功能 |
+| --- | --- |
+| `C-j` / `C-n` / `↓` | 选择下一个候选或历史项 |
+| `C-k` / `C-p` / `↑` | 选择上一个候选或历史项 |
+| `C-h` / `C-l` | 向左 / 向右移动一个字符 |
+| `C-a` / `C-e` | 移动到输入开头 / 末尾 |
+| `RET` | 接受当前候选并退出 minibuffer |
+
+`C-h` 在 minibuffer 中被改成了向左移动，不再删除字符；删除请继续使用
+Backspace（`DEL`）。
+
+在 `M-x`、`C-x C-f` 等使用 Vertico 的补全中，`C-j` / `C-k` 直接调用
+`vertico-next` / `vertico-previous`，可以用它们在命令或文件列表中上下切换；
+没有候选时（例如普通的 `read-string` 提示）则退化为在历史记录中前后移动。
+`↓` / `↑` 仍然由 Vertico 处理。
+
+按下 `ESC` 后 minibuffer 进入 Evil 的 normal state，此时 `j` / `k` 同样用于
+切换候选，`h` / `l` 左右移动，`0` / `$` 跳到开头 / 末尾；按 `i` 返回 insert
+state，再按一次 `ESC` 取消输入。`C-j` 不再像 Emacs 默认那样直接退出
+minibuffer，请使用 `RET` 确认。
+
+Ex 命令行（`:`）和搜索提示（`/`、`?`）使用独立的键位表，配置同样为它们设置
+了 `C-j` / `C-k` 的历史导航，以及 `C-h` / `C-e` 的编辑行为。
 
 ## org-download
 

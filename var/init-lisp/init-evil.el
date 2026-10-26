@@ -41,6 +41,14 @@
   ;; Whether Y yanks to the end of the line
   (setq evil-want-Y-yank-to-eol t)
 
+  ;; Make `j'/`k' move by screen lines in buffers where
+  ;; `visual-line-mode' is active.  Without this, a soft-wrapped
+  ;; paragraph is one logical line, so `j'/`k' jump over the whole
+  ;; paragraph instead of moving one visual line.  This must be set
+  ;; before Evil is loaded, because Evil installs the visual-line
+  ;; key bindings at load time.
+  (setq evil-respect-visual-line-mode t)
+
   ;; Start `evil-mode'
   (evil-mode 1)
 

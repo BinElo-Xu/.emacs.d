@@ -1,5 +1,8 @@
 ;;; init-clipboard.el --- Clipboard integration and org-download -*- lexical-binding: t; -*-
 
+;; emacs clipborad integration
+(setq select-enable-clipboard t)
+
 ;; Wayland clipboard integration.
 
 (use-package emacs
