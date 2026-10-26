@@ -1,0 +1,28 @@
+# Byte-compiled and native-compiled files
+*.elc
+*.eln
+
+# Package installations and runtime data under var/
+var/elpa/
+var/eln-cache/
+var/autosave/
+var/backup/
+var/tramp-autosave/
+var/org-roam.db
+var/history
+var/recentf.eld
+var/saveplace
+var/bookmarks
+var/*.eld
+
+# Native-compilation cache created before user-emacs-directory is redirected
+/eln-cache/
+
+# Stale package directory from before user-emacs-directory was moved to var/
+/elpa/
+
+# Editor and OS noise
+*~
+\#*\#
+.#*
+.DS_Store
