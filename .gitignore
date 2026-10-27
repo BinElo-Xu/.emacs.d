@@ -5,6 +5,7 @@
 # Package installations and runtime data under var/
 var/elpa/
 var/eln-cache/
+var/tree-sitter/
 var/autosave/
 var/backup/
 var/tramp-autosave/

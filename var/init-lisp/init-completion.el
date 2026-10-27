@@ -1,30 +1,70 @@
 ;;; -*- lexical-binding: t -*-
 
+;;; Code completion
+
 ;; Corfu enhances in-buffer completion by displaying a compact popup with
-;; current candidates, positioned either below or above the point. Candidates
-;; can be selected by navigating up or down.
+;; current candidates, positioned either below or above the point.
+;;
+;; Auto completion is enabled only in code-related buffers by the hook below.
+;; Text and Org buffers keep manual completion, which avoids popups while
+;; writing prose.  TAB remains a manual fallback everywhere.
+
+(defun my/corfu-auto-completion-on ()
+  "Enable automatic Corfu completion in the current buffer."
+  (setq-local corfu-auto t))
+
 (use-package corfu
   :init
   (setq text-mode-ispell-word-completion nil)
   ;; Hide commands in M-x which do not apply to the current mode.
   (setq read-extended-command-predicate #'command-completion-default-include-p)
-  ;; Disable Ispell completion function. As an alternative try `cape-dict'.
+  ;; Keep TAB as a manual fallback in addition to auto completion.
   (setq tab-always-indent 'complete)
 
-  (global-corfu-mode 1))
+  ;; Popup behavior.  `corfu-auto' itself is enabled buffer-locally by
+  ;; `my/corfu-auto-completion-on' below.
+  (setq corfu-auto-delay 0.15
+        corfu-auto-prefix 2
+        ;; Show attribute/member candidates immediately after ".".  This is
+        ;; useful for Python (`obj.`), LSP servers and Elisp.
+        corfu-auto-trigger "."
+        corfu-cycle t
+        corfu-popupinfo-delay '(0.8 . 0.3))
+
+  (global-corfu-mode 1)
+
+  :config
+  ;; Optional Corfu extensions.  `corfu-popupinfo' shows documentation for the
+  ;; selected candidate; `corfu-history' ranks recently selected candidates
+  ;; higher and is saved through the existing savehist configuration.
+  (require 'corfu-auto)
+  (require 'corfu-popupinfo)
+  (require 'corfu-history)
+  (corfu-popupinfo-mode 1)
+  (corfu-history-mode 1)
+
+  ;; Auto completion in code and shells.  Prose buffers keep the less
+  ;; intrusive manual behavior.
+  (add-hook 'prog-mode-hook #'my/corfu-auto-completion-on)
+  (add-hook 'conf-mode-hook #'my/corfu-auto-completion-on)
+  (add-hook 'comint-mode-hook #'my/corfu-auto-completion-on)
+  (add-hook 'eshell-mode-hook #'my/corfu-auto-completion-on))
 
 ;; Cape, or Completion At Point Extensions, extends the capabilities of
 ;; in-buffer completion. It integrates with Corfu or the default completion UI,
 ;; by providing additional backends through completion-at-point-functions.
 (use-package cape
-  :commands (cape-dabbrev cape-file cape-elisp-block)
+  :commands (cape-dabbrev cape-file cape-elisp-block cape-keyword)
   :bind ("C-c p" . cape-prefix-map)
   :init
   ;; Add to the global default value of `completion-at-point-functions' which is
-  ;; used by `completion-at-point'.
-  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  ;; used by `completion-at-point'.  These are fallbacks: language servers and
+  ;; major-mode CAPFs take precedence.  `add-hook' prepends, so add in reverse
+  ;; order to get: dabbrev, file, keyword, elisp-block.
+  (add-hook 'completion-at-point-functions #'cape-elisp-block)
+  (add-hook 'completion-at-point-functions #'cape-keyword)
   (add-hook 'completion-at-point-functions #'cape-file)
-  (add-hook 'completion-at-point-functions #'cape-elisp-block))
+  (add-hook 'completion-at-point-functions #'cape-dabbrev))
 ;; Vertico provides a vertical completion interface, making it easier to
 ;; navigate and select from completion candidates (e.g., when `M-x` is pressed).
 (use-package vertico

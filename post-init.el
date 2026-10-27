@@ -22,6 +22,10 @@
 ;; evil relative configuration.
 (require 'init-evil)
 
+;; project.el integration: project list, dispatch menu, and Evil-friendly
+;; project keybindings.
+(require 'init-project)
+
 ;; Evil-style keybindings for the minibuffer (candidate navigation, editing
 ;; keys).  It has to be loaded after init-completion (Vertico) and init-evil.
 (require 'init-minibuffer)
@@ -31,4 +35,14 @@
 
 ;; org-mode configuration.
 (require 'init-org)
+
+;; Tree-sitter grammar installation and major-mode remapping.  Language modules
+;; use `my/treesit-enable' to select their Tree-sitter major mode.
+(require 'init-treesit)
+
+;; Language Server Protocol support.  Generic Eglot behavior lives in
+;; init-eglot; each language keeps its own settings in init-<language>.el and
+;; registers its server with `my/eglot-register'.  Add new language files here.
+(require 'init-eglot)
+(require 'init-python)
 
