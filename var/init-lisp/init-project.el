@@ -51,6 +51,7 @@ Remote files are skipped to avoid slow TRAMP lookups."
         (project-vc-dir "VC-Dir" ?v)
         (project-shell "Shell" ?s)
         (project-eshell "Eshell" ?e)
+        (my/vterm "VTerm" ?t)
         (project-compile "Compile" ?c)
         (project-any-command "Other" ?o)))
 

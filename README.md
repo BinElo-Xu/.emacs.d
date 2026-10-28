@@ -29,7 +29,10 @@
 │   │   ├── init-org.el
 │   │   ├── init-treesit.el      # Tree-sitter 自动安装与 mode remap
 │   │   ├── init-eglot.el        # Eglot 通用配置与语言服务器注册辅助
-│   │   └── init-python.el       # Python、uv 与 Eglot 的 Python 集成
+│   │   ├── init-python.el       # Python、uv 与 Eglot 的 Python 集成
+│   │   ├── init-c-c++.el        # C/C++、Makefile、CMake 与 clangd
+│   │   ├── init-vterm.el        # VTerm 终端与 Evil 集成
+│   │   └── init-ui.el           # which-key、repeat、winner 与像素滚动
 │   ├── elpa/               # 安装的包（不纳入 Git）
 │   ├── eln-cache/          # 原生编译缓存（不纳入 Git）
 │   ├── tree-sitter/        # Tree-sitter 语法库（不纳入 Git）
@@ -49,7 +52,11 @@
 - Emacs 29.1 或更新版本（当前验证版本：31.1）
 - Linux
 - `uv`（用于创建 Python 虚拟环境，以及在未安装语言服务器时通过 `uvx` 启动 basedpyright）
+- `clangd`（用于 C/C++ 的 Eglot 语言服务器；可通过发行版包管理器安装）
+- `fd` 和 `ripgrep`（`consult-fd` 与 `consult-ripgrep` 使用）
 - Git 和 C 编译器（首次自动编译 Tree-sitter 语法时需要）
+- `cmake` 和 `libvterm`（VTerm 模块首次编译时需要；没有系统 libvterm 时还需要
+  `libtool`）
 - Wayland 下从剪贴板读取图片需要 `wl-clipboard`（提供 `wl-paste`）；
   X11 下需要 `xclip`
 - 首次安装缺失包时需要访问 MELPA、GNU ELPA 或 NonGNU ELPA
@@ -82,6 +89,9 @@ M-x package-refresh-contents
 11. `init-treesit`：Tree-sitter 自动安装与 major mode remap
 12. `init-eglot`：Eglot 通用配置、快捷键和语言服务器注册辅助
 13. `init-python`：Python 模式、uv 虚拟环境、basedpyright/pyright 语言服务器
+14. `init-c-c++`：C/C++ Tree-sitter 模式、clangd、Makefile/CMake 编辑与 C/C++ 项目根目录
+15. `init-vterm`：VTerm 终端、项目级会话与 Evil 集成
+16. `init-ui`：`which-key`、`repeat-mode`、`winner-mode` 与像素滚动
 
 ## 代码补全（Corfu）
 
@@ -278,6 +288,10 @@ Python 的 `pyproject.toml` / `uv.lock` 会在 `init-python.el` 中加入
 中找到正确的根目录；`.venv/`、`__pycache__/` 等目录也被排除在项目文件搜索
 之外。
 
+C/C++ 的 `.clangd`、`CMakeLists.txt`、`Makefile` 等标记由
+`init-c-c++.el` 加入同一个列表；`build/`、`out/`、`cmake-build-*/`、
+`CMakeFiles/` 等构建目录会从项目搜索中排除。
+
 ### 项目快捷键
 
 | 快捷键 | 功能 |
@@ -298,6 +312,8 @@ Python 的 `pyproject.toml` / `uv.lock` 会在 `init-python.el` 中加入
 | `C-x p Z` | 清理已失效的项目 |
 | `gp` | Evil normal state 的项目前缀，例如 `gp f`、`gp p` |
 | `C-c P` | 任意 state 下可用的项目前缀 |
+
+在 `C-x p p` 的 dispatch 菜单中按 `t` 可以直接打开当前项目的 VTerm。
 
 ## Eglot 与语言服务器
 
@@ -480,6 +496,155 @@ project.el 的命令在 monorepo 的子项目中也会使用正确的根目录�
 `uv sync` 创建 `.venv` 时，Eglot 可能已经用系统 Python 启动了服务器；执行完
 后用 `C-c e R` 重启连接，让 basedpyright 重新发现虚拟环境。
 
+## C/C++ 与构建文件
+
+`var/init-lisp/init-c-c++.el` 负责 C/C++ 的 Tree-sitter 模式、clangd 语言服务器，
+以及 Makefile、CMake 和 clang 配置文件的基础编辑支持。调试没有集成到 Emacs 中，
+可以直接使用 gdb。
+
+### 编辑模式
+
+- `.c` 使用 `c-ts-mode`；
+- `.h` 使用 `c-or-c++-ts-mode`，根据文件内容判断是 C 还是 C++；
+- `.cpp`、`.cc`、`.cxx`、`.hpp`、`.hh`、`.hxx` 使用 `c++-ts-mode`；
+- 额外的 C++ 扩展名 `.C`、`.H`、`.ipp`、`.tpp`、`.inl`、`.ixx`、`.cppm`、
+  `.ccm`、`.cxxm` 也映射到 `c++-ts-mode`；
+- `Makefile`、`makefile`、`GNUmakefile`、`*.mk`、`*.make`、`*.mak`、`Kbuild`
+  使用 `makefile-gmake-mode`；
+- `Makefile.am` 使用 `makefile-automake-mode`，`Makefile.in` 使用
+  `makefile-mode`；
+- `CMakeLists.txt` 和 `*.cmake` 使用 `cmake-ts-mode`；
+- `meson.build` 和 `meson_options.txt` 使用 `meson-mode`；
+- `compile_commands.json`、`CMakePresets.json` 和 `CMakeUserPresets.json` 使用
+  `json-ts-mode`；
+- `.clangd`、`.clang-format`、`.clang-tidy` 使用 `yaml-ts-mode`。
+
+这些模式大多属于 `prog-mode` 或从它派生，因此会自动启用 Corfu 补全；YAML
+使用 `text-mode`，保持手动补全。Cape 的 `C-c p` 前缀在这些缓冲区中都可以使用。
+Evil 的 `gc` 注释操作、`C-c e` Eglot 前缀和 Eglot 缓冲区中的 `gr` 前缀都同样
+适用于 C/C++。
+
+Makefile 中继续使用真正的 TAB 作为 recipe 缩进；CMake、YAML 和 JSON 文件则
+使用空格缩进。C/C++ 使用 Linux 缩进风格，缩进宽度为 4 个空格，并关闭 TAB
+缩进。
+
+### clangd
+
+打开 C/C++ 文件时，Eglot 会自动启动 clangd：
+
+```text
+clangd --background-index --clang-tidy
+```
+
+可以用 `my/c-c++-clangd-args` 自定义参数，例如关闭 clang-tidy：
+
+```elisp
+(setq my/c-c++-clangd-args '("--background-index"))
+```
+
+clangd 会从项目根目录向上查找 `compile_commands.json`、`compile_flags.txt` 和
+`.clangd`。为了让 clangd 获得准确的 include 路径和编译宏，建议为项目生成
+`compile_commands.json`：
+
+```text
+cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
+
+Makefile 项目可以使用 `bear -- make` 或 `compiledb make` 生成。更新编译数据库后，
+用 `C-c e R` 重启当前 Eglot 连接。
+
+C/C++ 项目根目录由最近的 `.clangd`、`CMakeLists.txt`、`meson.build`、
+`configure.ac`、`configure.in` 或 `Makefile.am` 决定；这些标记会加入
+`project-vc-extra-root-markers`。只有 `Makefile` / `GNUmakefile` 的项目使用
+`my/c-c++-project-find`：在没有 VC 根目录时，它会选择最上层的 Makefile 所在
+目录，避免子目录 Makefile 把项目切碎。`build/`、`out/`、`cmake-build-*/`、
+`CMakeFiles/` 和 `.cache/` 会从项目文件搜索中排除。`compile_commands.json`
+经常位于 `build/` 中，因此它不是项目根目录标记；clangd 会自行查找它。
+
+### 快捷键
+
+没有新增 C/C++ 专用前缀；沿用已有的通用按键：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c e` | Eglot 全局前缀（代码操作、重命名、定义、引用等） |
+| `gr` | Eglot 缓冲区中 Evil normal state 的 LSP 前缀 |
+| `gd` / `K` / `C-t` | 定义 / 文档 / 跳回 |
+| `C-c p` | Cape 补全前缀 |
+| `C-x p` / `gp` / `C-c P` | project.el 项目前缀 |
+
+`clangd` 不提供调试功能；调试请在 Emacs 外部使用 gdb。
+
+## VTerm 终端
+
+`var/init-lisp/init-vterm.el` 配置 VTerm 终端。VTerm 使用 libvterm 的动态模块，
+适合运行 `htop`、`ncurses`、SSH 等需要完整终端能力的程序。
+
+### 打开终端
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c t` | 在当前项目根目录打开 VTerm；没有项目时使用当前目录 |
+| `C-c T` | 在另一个窗口打开 VTerm |
+
+在 `C-x p p` 的项目 dispatch 菜单中按 `t` 也可以打开当前项目的 VTerm。
+
+每个项目使用独立的 VTerm 缓冲区，例如 `*vterm:my-project*`；没有项目时使用
+`*vterm*`。默认会复用当前项目的终端。带数字前缀参数可以切换或创建编号会话：
+
+```text
+C-u 2 C-c t
+```
+
+### 终端设置
+
+- shell 使用环境变量 `SHELL`，当前环境为 `/usr/bin/bash`；
+- 滚动历史上限为 100000 行；
+- shell 退出后自动关闭对应缓冲区；
+- 启用 `vterm-copy-mode-remove-fake-newlines`，方便在复制模式中搜索和复制；
+- 首次运行时会自动编译 `vterm-module`。编译需要 `cmake` 和 `libvterm`；Arch
+  Linux 上可以执行：
+
+```text
+sudo pacman -S cmake libvterm
+```
+
+或者只安装用户级 CMake：
+
+```text
+uv tool install cmake
+```
+
+### Evil 集成
+
+VTerm 的 Evil 绑定来自 `evil-collection`：
+
+- 新建终端默认进入 Evil insert state，可以直接输入命令；
+- 按 `ESC` 回到 Evil normal state，可使用 `h`/`j`/`k`/`l` 浏览终端历史，
+  以及 `i`/`a`/`I`/`A` 回到输入状态；
+- normal state 下的 `p`、`P`、`d`、`D`、`x`、`X`、`c`、`C`、`s`、`S`、`u`
+  等操作会尽量限制在终端当前命令行内；
+- `C-c C-z` 切换 ESC 的归属：
+  - 默认由 Evil 处理，用于回到 normal state；
+  - 切换后 ESC 会直接发送给终端，适合在 VTerm 中运行 Vim、SSH 或另一个
+    Emacs；
+- `C-c C-t` 进入/退出 `vterm-copy-mode`，用于搜索和复制终端输出；
+- `C-c C-l` 清除滚动历史；
+- `C-c C-n` / `C-c C-p` 跳到下一个 / 上一个 shell prompt；
+- `C-c C-r` 重置终端光标位置。
+
+VTerm 的复制模式、提示符跳转和目录跟踪可以通过 shell 侧配置增强；不配置时
+仍可正常作为交互式终端使用。
+
+## 界面与窗口
+
+`var/init-lisp/init-ui.el` 启用以下内置功能：
+
+- `which-key`：显示 `C-c`、`C-x`、`gp`、`gr` 等前缀的后续按键；
+- `repeat-mode`：重复执行 `next-error`、`other-window` 等命令；
+- `winner-mode`：撤销/重做窗口布局变化，可用 `C-c <left>` / `C-c <right>`；
+- `pixel-scroll-precision-mode`：在图形界面中启用平滑像素滚动。
+
 ## 常用快捷键
 
 完整的快捷键速查表见 [SHORTCUTS.md](SHORTCUTS.md)。
@@ -502,6 +667,7 @@ project.el 的命令在 monorepo 的子项目中也会使用正确的根目录�
 | `gr` | Eglot 管理缓冲区中 Evil normal state 的 LSP 前缀 |
 | `C-c e` | Eglot 全局前缀键（代码操作、重命名、格式化、跳转等） |
 | `C-c v` | uv / Python 前缀键（sync、lock、add、run、Python shell） |
+| `C-c t` / `C-c T` | 在当前项目 / 另一个窗口打开 VTerm 终端 |
 
 ## 版本控制
 
@@ -512,5 +678,6 @@ project.el 的命令在 monorepo 的子项目中也会使用正确的根目录�
 - `var/tree-sitter/`：自动编译的 Tree-sitter 语法库
 - `var/autosave/`、`var/history`、`var/recentf.eld`、`var/saveplace`
 - `var/projects.eld`：project.el 记住的项目列表
+- `var/tramp`、`var/bookmarks`：Tramp 连接历史和书签
 - `var/org-roam.db`：从笔记自动生成的数据库
 - 顶层遗留的 `elpa/` 目录

@@ -9,6 +9,7 @@ var/tree-sitter/
 var/autosave/
 var/backup/
 var/tramp-autosave/
+var/tramp
 var/org-roam.db
 var/history
 var/recentf.eld

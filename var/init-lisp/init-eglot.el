@@ -50,8 +50,8 @@
  ;; sent to the server while typing.
  eglot-send-changes-idle-time 0.4
 
- ;; Show progress in the mode line.
- eglot-report-progress t)
+ ;; Show progress only while debugging; routine progress messages are noisy.
+ eglot-report-progress init-file-debug)
 
 ;;; Server selection helpers
 

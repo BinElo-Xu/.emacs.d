@@ -28,6 +28,7 @@
 | `C-c e` | Eglot 全局前缀 |
 | `gr` | Eglot 缓冲区中 Evil normal state 的 LSP 前缀 |
 | `C-c v` | Python / uv 前缀 |
+| `C-c t` | 打开 VTerm 终端 |
 | `C-c n f` | 查找 Org-roam 节点 |
 | `C-c a` | Org Agenda |
 | `C-c g` | 在 Org 文件中插入剪贴板图片 |
@@ -124,7 +125,7 @@
 | `M-g k` | `consult-global-mark` |
 | `M-g i` | `consult-imenu` |
 | `M-g I` | `consult-imenu-multi` |
-| `M-s d` | `consult-find` |
+| `M-s d` | `consult-fd` |
 | `M-s c` | `consult-locate` |
 | `M-s g` | `consult-grep` |
 | `M-s G` | `consult-git-grep` |
@@ -147,6 +148,18 @@
 | `M-s L` | Isearch | `consult-line-multi` |
 | `M-s` | minibuffer | `consult-history` |
 | `M-r` | minibuffer | `consult-history` |
+
+### Vertico 扩展
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `M-R` | 恢复上一次 Vertico 补全会话（`vertico-repeat`） |
+| `RET` | 在文件补全中进入选中的目录；否则接受当前候选 |
+| `DEL` | 在文件路径中删除前一个路径组件 |
+| `M-DEL` | 在文件路径中删除前一个单词 |
+
+`RET` / `DEL` / `M-DEL` 只在 Vertico 文件补全中改变目录导航行为，普通补全
+仍然接受或编辑输入。
 
 ## 项目（project.el）
 
@@ -256,6 +269,69 @@
 | `C-c v a` | `uv add`，添加依赖 |
 | `C-c v r` | `uv run`，在项目环境中执行命令 |
 | `C-c v p` | `run-python`，启动 Python shell |
+
+## C/C++ 与构建文件
+
+C/C++ 使用 clangd，并复用 Eglot 的按键：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c e` | Eglot 全局前缀 |
+| `gr` | Eglot 缓冲区中 Evil normal state 的 LSP 前缀 |
+| `gd` / `K` / `C-t` | 定义 / 文档 / 跳回 |
+| `C-c p` | Cape 补全前缀 |
+| `C-x p` / `gp` / `C-c P` | project.el 项目前缀 |
+
+Makefile 模式还提供一些内置按键（不是本配置新增）：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c TAB` | 插入 GNU make 函数 |
+| `C-c C-f` | 把当前文件名插入为 target |
+| `C-c C-c` | 注释/取消注释当前区域 |
+
+C/C++ 没有单独的调试快捷键；调试在 Emacs 外部使用 gdb。
+
+## 界面与窗口
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c <left>` / `C-c <right>` | 撤销 / 重做窗口布局变化（`winner-mode`） |
+
+`which-key` 会在前缀键停顿后自动显示后续按键；`repeat-mode` 用于重复执行
+支持重复的 Emacs 命令。
+
+## VTerm 终端
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c t` | 在当前项目根目录打开 VTerm |
+| `C-c T` | 在另一个窗口打开 VTerm |
+| `C-u 2 C-c t` | 切换或创建编号为 2 的 VTerm 会话 |
+| `C-x p p` 然后 `t` | 在项目 dispatch 菜单中打开 VTerm |
+
+VTerm 内部：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `ESC` | 默认回到 Evil normal state |
+| `C-c C-z` | 切换 ESC 是交给 Evil 还是发送给终端 |
+| `C-c C-t` | 进入/退出 `vterm-copy-mode` |
+| `C-c C-l` | 清除滚动历史 |
+| `C-c C-n` / `C-c C-p` | 下一个 / 上一个 shell prompt |
+| `C-c C-r` | 重置终端光标位置 |
+| `i` / `a` / `I` / `A` | normal state 下进入输入状态 |
+| `p` / `P` | 粘贴到终端 |
+| `d` / `D` / `x` / `X` | 删除终端命令行内容 |
+| `c` / `C` / `s` / `S` | 修改终端命令行内容 |
+| `u` | 撤销终端输入 |
+| `j` / `k` | 在终端历史中移动 |
+| `G` | 跳到终端光标位置 |
+| `[[` / `]]` | 上一个 / 下一个 shell prompt |
+
+VTerm 由 `evil-collection` 提供 normal state 集成；新建终端默认进入 insert
+state。要在终端里运行 Vim、SSH 或另一个 Emacs 时，先用 `C-c C-z` 把 ESC
+交给终端。
 
 ## Org、Org-roam 与 org-download
 

@@ -1,9 +1,6 @@
 ;;; init-clipboard.el --- Clipboard integration and org-download -*- lexical-binding: t; -*-
 
-;; emacs clipborad integration
-(setq select-enable-clipboard t)
-
-;; Wayland clipboard integration.
+;;; Wayland clipboard integration.
 
 (use-package emacs
   :ensure nil
@@ -83,8 +80,10 @@ directory that provides the directory-local variables."
         (funcall orig variables dir-name))
     (funcall orig variables dir-name)))
 
-(advice-add 'hack-local-variables-filter :around
-            #'my/notes--allow-dir-local-eval)
+(unless (advice-member-p #'my/notes--allow-dir-local-eval
+                         'hack-local-variables-filter)
+  (advice-add 'hack-local-variables-filter :around
+              #'my/notes--allow-dir-local-eval))
 
 (provide 'init-clipboard)
 

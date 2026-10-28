@@ -75,6 +75,22 @@
   ;; (setq vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
   (vertico-mode 1))
 
+;; Ido-like directory navigation and repeatable completion sessions.  Both
+;; extensions ship with Vertico.
+(use-package vertico-directory
+  :ensure nil
+  :after vertico
+  :bind (:map vertico-map
+              ("RET" . vertico-directory-enter)
+              ("DEL" . vertico-directory-delete-char)
+              ("M-DEL" . vertico-directory-delete-word)))
+
+(use-package vertico-repeat
+  :ensure nil
+  :after vertico
+  :bind ("M-R" . vertico-repeat)
+  :hook (minibuffer-setup . vertico-repeat-save))
+
 ;; Vertico leverages Orderless' flexible matching capabilities, allowing users
 ;; to input multiple patterns separated by spaces, which Orderless then
 ;; matches in any order against the candidates.
@@ -178,7 +194,7 @@
          ("M-g i" . consult-imenu)
          ("M-g I" . consult-imenu-multi)
          ;; M-s bindings in `search-map'
-         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+         ("M-s d" . consult-fd)                    ;; Alternative: consult-find
          ("M-s c" . consult-locate)
          ("M-s g" . consult-grep)
          ("M-s G" . consult-git-grep)
@@ -206,7 +222,8 @@
   ;; `consult-register-store' and the built-in commands.  This improves the
   ;; register formatting, adds thin separator lines, register sorting and hides
   ;; the window mode line.
-  (advice-add #'register-preview :override #'consult-register-window)
+  (unless (advice-member-p #'consult-register-window 'register-preview)
+    (advice-add #'register-preview :override #'consult-register-window))
   (setq register-preview-delay 0.5)
 
   ;; Use Consult to select xref locations with preview
@@ -226,7 +243,7 @@
   ;; :preview-key on a per-command basis using the `consult-customize' macro.
   (consult-customize
    consult-theme :preview-key '(:debounce 0.2 any)
-   consult-ripgrep consult-git-grep consult-grep consult-man
+   consult-ripgrep consult-git-grep consult-grep consult-fd consult-man
    consult-bookmark consult-recent-file consult-xref
    consult-source-bookmark consult-source-file-register
    consult-source-recent-file consult-source-project-recent-file

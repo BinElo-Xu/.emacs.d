@@ -104,7 +104,7 @@
     "Toggle comment for the region between BEG and END."
     (interactive "<r>")
     (comment-or-uncomment-region beg end))
-  (evil-define-key 'normal 'global (kbd "gc") 'my-evil-comment-or-uncomment))
+  (evil-define-key* 'normal 'global (kbd "gc") #'my-evil-comment-or-uncomment))
 
 (provide 'init-evil)
 

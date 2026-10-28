@@ -46,3 +46,14 @@
 (require 'init-eglot)
 (require 'init-python)
 
+;; C/C++ support: Tree-sitter modes, clangd, Makefile/CMake editing, and
+;; C/C++ project root detection.
+(require 'init-c-c++)
+
+;; VTerm terminal with project-aware sessions and Evil integration.
+(require 'init-vterm)
+
+;; Built-in UI conveniences: which-key, repeat-mode, winner-mode, and pixel
+;; scrolling on graphical frames.
+(require 'init-ui)
+

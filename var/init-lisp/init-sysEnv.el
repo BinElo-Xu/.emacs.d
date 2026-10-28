@@ -11,7 +11,7 @@
   :config
   ;; Set `compile-angel-verbose' to nil to disable compile-angel messages.
   ;; (When set to nil, compile-angel won't show which file is being compiled.)
-  (setq compile-angel-verbose t)
+  (setq compile-angel-verbose nil)
 
   ;; The following directive prevents compile-angel from compiling your init
   ;; files. If you choose to remove this push to `compile-angel-excluded-files'
@@ -38,12 +38,13 @@
 
 ;; this package just for synchroun the env variables.
 (use-package exec-path-from-shell
-  :if (and (or (display-graphic-p) (daemonp))
-           (eq system-type 'darwin)) ; macOS only
+  :if (or (display-graphic-p) (daemonp))
   :demand t
   :functions exec-path-from-shell-initialize
   :config
   (dolist (var '("TMPDIR"
+                 "PATH"
+                 "SHELL"
                  "SSH_AUTH_SOCK" "SSH_AGENT_PID"
                  "GPG_AGENT_INFO"
                  ;; "FZF_DEFAULT_COMMAND" "FZF_DEFAULT_OPTS" ; fzf

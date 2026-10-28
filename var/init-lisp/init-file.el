@@ -21,12 +21,12 @@
   :init
   (setq recentf-auto-cleanup (if (daemonp) 300 'never))
   (setq recentf-exclude
-        (list "\\.tar$" "\\.tbz2$" "\\.tbz$" "\\.tgz$" "\\.bz2$"
-              "\\.bz$" "\\.gz$" "\\.gzip$" "\\.xz$" "\\.zip$"
-              "\\.7z$" "\\.rar$"
+        (list "\\.tar\\'" "\\.tbz2\\'" "\\.tbz\\'" "\\.tgz\\'" "\\.bz2\\'"
+              "\\.bz\\'" "\\.gz\\'" "\\.gzip\\'" "\\.xz\\'" "\\.zip\\'"
+              "\\.7z\\'" "\\.rar\\'"
               "COMMIT_EDITMSG\\'"
-              "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)$"
-              "-autoloads\\.el$" "autoload\\.el$"))
+              "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)\\'"
+              "-autoloads\\.el\\'" "autoload\\.el\\'"))
   ;; Enable `recentf-mode'
   (recentf-mode 1)
 
@@ -44,7 +44,6 @@
 (use-package savehist
   :ensure nil
   :init
-  (setq history-length 300)
   (setq savehist-autosave-interval 600)
   (savehist-mode 1))
 

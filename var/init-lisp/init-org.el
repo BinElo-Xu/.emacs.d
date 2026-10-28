@@ -14,6 +14,8 @@
   (setq org-startup-indented t)
   (setq org-adapt-indentation nil)
   (setq org-edit-src-content-indentation 0)
+  (setq org-directory (expand-file-name "~/Notes/"))
+  (setq my/notes-directory org-directory)
   ;; (setq org-fontify-done-headline t)
   ;; (setq org-fontify-todo-headline t)
   ;; (setq org-fontify-whole-heading-line t)
@@ -27,18 +29,20 @@
 
 ;; Capturing template
 (setq org-capture-templates
-      `(("t" "todo" entry (file "/home/elo/Notes/agenda/inbox.org")  ; "" => `org-default-notes-file'
-         "* next %?\n%u\n" :clock-resume t)
-        ("n" "note" entry (file "/home/elo/Notes/agenda/inbox.org")
-         "* %? :NOTE:\n%U\n%a\n" :clock-resume t)
-        ))
+      (let ((inbox (expand-file-name "agenda/inbox.org" org-directory)))
+        `(("t" "todo" entry (file ,inbox)
+           "* next %?\n%u\n" :clock-resume t)
+          ("n" "note" entry (file ,inbox)
+           "* %? :NOTE:\n%U\n%a\n" :clock-resume t))))
 
 ;; add some file to org-agenda file.
-(setq org-agenda-files '("/home/elo/Notes/agenda/inbox.org"
-                         "/home/elo/Notes/agenda/todo.org"
-                         "/home/elo/Notes/agenda/habbits.org"
-                         "/home/elo/Notes/agenda/archive.org"
-                         ))
+(setq org-agenda-files
+      (mapcar (lambda (file)
+                (expand-file-name file org-directory))
+              '("agenda/inbox.org"
+                "agenda/todo.org"
+                "agenda/habbits.org"
+                "agenda/archive.org")))
 
 
 ;; when cursor is on the link, link content will 
@@ -66,7 +70,7 @@
 (setq org-stuck-projects
       '("-INBOX/PROJECT" ("NEXT")))
 
-(let ((active-project-match '(car org-stuck-projects)))
+(let ((active-project-match (car org-stuck-projects)))
   (setq org-agenda-compact-blocks t
         org-agenda-sticky t
         org-agenda-start-on-weekday nil
@@ -147,18 +151,14 @@
 
 (add-hook 'org-agenda-mode-hook 'hl-line-mode)
 
-;;; 以下内容添加到 post-init.el
-
-;; 普通笔记：~/Projects/Notes/notes/
-;; 每日日记：~/Projects/Notes/journal/
+;;; Org-roam
 
 (use-package org-roam
   :ensure t
   :commands (org-roam-capture org-roam-db-sync)
   :init
   ;; 在首次加载 Org-roam 前就设置路径。
-  (setq org-roam-directory
-        (expand-file-name "~/Notes/")
+  (setq org-roam-directory org-directory
         org-roam-dailies-directory "journal/")
 
   :custom
@@ -229,12 +229,6 @@
   (org-roam-ui-follow t)
   (org-roam-ui-update-on-save t)
   (org-roam-ui-open-on-start t))
-
-
-;; 已有 consult 配置时，保留原配置即可，不必重复声明。
-(use-package consult
-  :ensure t
-  :defer t)
 
 
 ;; 首次加载 Org-roam 后启用 Consult 集成。
