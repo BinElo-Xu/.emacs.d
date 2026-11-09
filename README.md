@@ -32,6 +32,8 @@
 │   │   ├── init-python.el       # Python、uv 与 Eglot 的 Python 集成
 │   │   ├── init-c-c++.el        # C/C++、Makefile、CMake 与 clangd
 │   │   ├── init-vterm.el        # VTerm 终端与 Evil 集成
+│   │   ├── init-opencode.el     # OpenCode 与 agent-shell ACP 集成
+│   │   ├── init-magit.el        # Magit、Git 与 Evil/项目集成
 │   │   └── init-ui.el           # which-key、repeat、winner 与像素滚动
 │   ├── elpa/               # 安装的包（不纳入 Git）
 │   ├── eln-cache/          # 原生编译缓存（不纳入 Git）
@@ -53,6 +55,7 @@
 - Linux
 - `uv`（用于创建 Python 虚拟环境，以及在未安装语言服务器时通过 `uvx` 启动 basedpyright）
 - `clangd`（用于 C/C++ 的 Eglot 语言服务器；可通过发行版包管理器安装）
+- `opencode` CLI（用于 agent-shell 的 ACP 集成；需要先执行 `opencode auth login`）
 - `fd` 和 `ripgrep`（`consult-fd` 与 `consult-ripgrep` 使用）
 - Git 和 C 编译器（首次自动编译 Tree-sitter 语法时需要）
 - `cmake` 和 `libvterm`（VTerm 模块首次编译时需要；没有系统 libvterm 时还需要
@@ -91,7 +94,9 @@ M-x package-refresh-contents
 13. `init-python`：Python 模式、uv 虚拟环境、basedpyright/pyright 语言服务器
 14. `init-c-c++`：C/C++ Tree-sitter 模式、clangd、Makefile/CMake 编辑与 C/C++ 项目根目录
 15. `init-vterm`：VTerm 终端、项目级会话与 Evil 集成
-16. `init-ui`：`which-key`、`repeat-mode`、`winner-mode` 与像素滚动
+16. `init-opencode`：OpenCode、agent-shell、ACP 与 Evil 集成
+17. `init-magit`：Magit、Git、Evil Magit 状态与项目入口
+18. `init-ui`：`which-key`、`repeat-mode`、`winner-mode` 与像素滚动
 
 ## 代码补全（Corfu）
 
@@ -303,6 +308,7 @@ C/C++ 的 `.clangd`、`CMakeLists.txt`、`Makefile` 等标记由
 | `C-x p d` | 查找目录 |
 | `C-x p s` | 在当前项目中启动 shell |
 | `C-x p e` | 在当前项目中启动 Eshell |
+| `C-x p m` | 打开当前项目的 Magit status |
 | `C-x p c` | 编译项目 |
 | `C-x p k` | 删除项目相关的缓冲区 |
 | `C-x p C-b` | 列出项目缓冲区 |
@@ -313,7 +319,8 @@ C/C++ 的 `.clangd`、`CMakeLists.txt`、`Makefile` 等标记由
 | `gp` | Evil normal state 的项目前缀，例如 `gp f`、`gp p` |
 | `C-c P` | 任意 state 下可用的项目前缀 |
 
-在 `C-x p p` 的 dispatch 菜单中按 `t` 可以直接打开当前项目的 VTerm。
+在 `C-x p p` 的 dispatch 菜单中按 `t` 可以直接打开当前项目的 VTerm，
+按 `m` 打开 Magit status。
 
 ## Eglot 与语言服务器
 
@@ -636,6 +643,157 @@ VTerm 的 Evil 绑定来自 `evil-collection`：
 VTerm 的复制模式、提示符跳转和目录跟踪可以通过 shell 侧配置增强；不配置时
 仍可正常作为交互式终端使用。
 
+## OpenCode 与 agent-shell
+
+`var/init-lisp/init-opencode.el` 通过 `agent-shell` 的 ACP 后端集成 OpenCode：
+
+```text
+opencode acp
+```
+
+它不是把 OpenCode TUI 放进 VTerm，而是使用原生 Emacs 缓冲区，因此可以和
+Evil、Corfu、Vertico、Consult、project.el、diff-mode 等现有配置一起工作。
+
+### 前置条件
+
+先安装并登录 OpenCode：
+
+```text
+opencode auth login
+```
+
+`agent-shell` 来自 MELPA，配置会自动安装。OpenCode 需要位于 `PATH` 中；
+`init-sysEnv.el` 的 Linux GUI PATH 同步会处理桌面启动的情况。
+
+### 快捷键
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c o o` | 在当前项目启动或复用 OpenCode |
+| `C-c o n` | 强制启动新的 OpenCode 会话 |
+| `C-c o s` | 把当前选区发送到 OpenCode |
+| `C-c o d` | 发送当前区域或光标处的错误（DWIM） |
+| `C-c o t` | 显示/隐藏 OpenCode 缓冲区 |
+
+在 OpenCode shell 内部：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `RET` | 提交 prompt |
+| `M-J` | 插入换行，不提交 |
+| `TAB` | 在三角形/标题上展开或折叠该段；普通位置跳到下一项 |
+| `C-c C-c` | 中断当前请求 |
+| `C-c C-r` | 发送当前选区 |
+| `C-c C-v` | 选择模型 |
+| `C-c C-m` | 选择 session mode |
+| `C-c C-t` | 选择 thought level |
+| `C-c C-o` | 打开 viewport |
+| `gp ...` | Evil normal state 下的 project.el 前缀，如 `gp f`、`gp p` |
+| `C-y` | 粘贴；剪贴板是图片时改为插入图片文件上下文 |
+
+OpenCode 缓冲区默认进入 Evil insert state；normal state 下也可以直接按 `RET`
+提交。Agent 修改文件时产生的 diff 缓冲区默认进入 Evil Emacs state，方便直接
+使用 `y`、`n`、`p`、`q` 等按键。
+
+`evil-collection` 默认把 agent-shell 缓冲区的 `gp` 绑定为
+`agent-shell-yank-dwim`，会遮住全局的 `gp` → `project-prefix-map`；在 kill
+ring 为空时还会报 `Kill ring is empty`。本配置在 `init-opencode.el` 中把
+normal state 的 `gp` 改回 project 前缀，因此 OpenCode 缓冲区里的 `gp f`、
+`gp p`、`gp b` 等与普通缓冲区一致。剪贴板图片粘贴仍然可用，快捷键是 `C-y`
+（`agent-shell-mode-map` 中的 `<remap> <yank>`）。
+
+### 斜杠命令
+
+这里的 OpenCode 是 `agent-shell` 通过 `opencode acp` 连接的 ACP 客户端，而不是
+OpenCode 的 TUI，因此 `/` 补全只包含：
+
+- 当前目录 `.opencode/commands/` 下的自定义命令（以及全局
+  `~/.config/opencode/commands/`）；
+- ACP 下发的内置命令 `compact`。
+
+TUI 自己的 `/new`、`/sessions`、`/models`、`/undo` 等命令不会出现在这里；需要
+它们时请直接运行 `opencode`。`/continue` 也不是 OpenCode 内置命令，可以自己
+定义：
+
+```md
+<!-- .opencode/commands/continue.md -->
+---
+description: Continue the current task
+---
+
+Continue from where you left off. Do not repeat completed work.
+```
+
+保存后重新开始会话，ACP 会通过 `available_commands_update` 下发该命令，
+agent-shell 的 `/` 补全即可使用 `/continue`。
+
+### 恢复会话与历史
+
+`agent-shell` 默认只恢复 session 标题，不显示历史对话。本配置已将
+`agent-shell-session-restore-verbosity` 设为 `'full`，恢复 session 时会完整
+回放之前的对话历史。
+
+- `C-c o n`：创建新的 agent shell，并列出当前项目的已有 session 供选择；
+- 选择已有 session 后，会恢复完整对话历史；
+- `C-c o o`：如果当前项目已经有 OpenCode buffer，通常只是切换显示；
+- `M-x agent-shell-resume-session`：已知 session ID 时直接恢复；
+- `M-x agent-shell-copy-session-id`：复制当前 session ID。
+
+如果希望自动恢复最近一次会话，可以额外设置：
+
+```elisp
+(setq agent-shell-session-strategy 'latest)
+```
+
+这样 `C-c o n` 会直接恢复最近 session，不再列出选择。
+
+### 项目、上下文与存储
+
+- OpenCode 从当前项目根目录启动；
+- `agent-shell` 会自动带上当前文件、行号、选区和错误上下文；
+- 会话记录和截图保存在 `~/.emacs.d/var/agent-shell/`，全局历史保存在
+  `~/.emacs.d/var/agent/`，不会在项目里创建 `.agent-shell/`；
+- `agent-shell` 的补全使用 comint，因此 Corfu 自动补全会在 OpenCode shell 中
+  生效；模型和模式选择使用 `completing-read`，因此复用 Vertico/Consult。
+- VTerm 配置与 OpenCode 配置相互独立，可以同时使用。
+
+如需固定默认模型，可以在启动前设置：
+
+```elisp
+(setq agent-shell-opencode-default-model-id "deepseek/deepseek-flash")
+```
+
+## Git 与 Magit
+
+`var/init-lisp/init-magit.el` 配置 Magit，并把它接入现有的 Evil、project.el、
+diff-mode 和 OpenCode 工作流。
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-x g` | 打开 Magit status |
+| `C-x p m` | 打开当前项目的 Magit status |
+| `C-t` / `\` | 在 Magit 缓冲区中切换 Evil text mode，方便自由移动和复制 |
+
+在 Magit 缓冲区中，Evil 绑定由 `evil-collection` 提供：
+
+- status / log / diff / process 等缓冲区默认进入 Evil normal state；
+- `s` / `u` 暂存 / 取消暂存，`c` 提交，`P` 推送，`f` 拉取，`l` 查看日志，
+  `d` 查看 diff，`q` 退出；
+- commit message 缓冲区默认进入 Evil insert state；
+- `C-t` 或 `\` 可以临时切换到 text mode，使用完整的 Evil 移动和复制操作。
+
+Magit 与项目集成：
+
+- `C-x p m` 是 project.el 中的 Magit 入口；
+- `C-x p v` 仍然保留为 `vc-dir`；
+- Magit status 使用当前窗口，diff 和 process 缓冲区使用其他窗口；
+- `magit-auto-revert-mode` 已启用，Git 操作后文件缓冲区会自动刷新。
+
+和 OpenCode 的配合：
+
+- 在 Magit status/diff 中选择区域后，可以用 `C-c o s` 把区域发送给 OpenCode；
+- 也可以用 `C-c o d` 发送当前区域或光标处的上下文（DWIM）。
+
 ## 界面与窗口
 
 `var/init-lisp/init-ui.el` 启用以下内置功能：
@@ -663,11 +821,14 @@ VTerm 的复制模式、提示符跳转和目录跟踪可以通过 shell 侧配�
 | `C-c n b` | 查看当前节点的反向链接 |
 | `C-c n s` | 搜索 Org-roam 笔记 |
 | `C-x p` | project.el 前缀键（项目切换、查找文件、搜索等） |
-| `gp` / `C-c P` | Evil normal state / 任意 state 的项目前缀 |
+| `C-x g` | 打开 Magit status |
+| `C-x p m` | 打开当前项目的 Magit status |
+| `gp` / `C-c P` | Evil normal state / 任意 state 的项目前缀（OpenCode 缓冲区同样可用） |
 | `gr` | Eglot 管理缓冲区中 Evil normal state 的 LSP 前缀 |
 | `C-c e` | Eglot 全局前缀键（代码操作、重命名、格式化、跳转等） |
 | `C-c v` | uv / Python 前缀键（sync、lock、add、run、Python shell） |
 | `C-c t` / `C-c T` | 在当前项目 / 另一个窗口打开 VTerm 终端 |
+| `C-c o` | OpenCode 前缀（`C-c o o` 启动/复用，`C-c o n` 新会话） |
 
 ## 版本控制
 
@@ -679,5 +840,6 @@ VTerm 的复制模式、提示符跳转和目录跟踪可以通过 shell 侧配�
 - `var/autosave/`、`var/history`、`var/recentf.eld`、`var/saveplace`
 - `var/projects.eld`：project.el 记住的项目列表
 - `var/tramp`、`var/bookmarks`：Tramp 连接历史和书签
+- `var/agent-shell/`、`var/agent/`：OpenCode/agent-shell 的会话记录、截图和全局历史
 - `var/org-roam.db`：从笔记自动生成的数据库
 - 顶层遗留的 `elpa/` 目录

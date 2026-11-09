@@ -29,6 +29,8 @@
 | `gr` | Eglot 缓冲区中 Evil normal state 的 LSP 前缀 |
 | `C-c v` | Python / uv 前缀 |
 | `C-c t` | 打开 VTerm 终端 |
+| `C-c o o` | 启动或复用 OpenCode |
+| `C-x g` | 打开 Magit status |
 | `C-c n f` | 查找 Org-roam 节点 |
 | `C-c a` | Org Agenda |
 | `C-c g` | 在 Org 文件中插入剪贴板图片 |
@@ -39,10 +41,11 @@
 | --- | --- | --- |
 | `C-c e` | 全局 | Eglot / LSP 命令 |
 | `C-c v` | 全局 | Python / uv 命令 |
+| `C-c o` | 全局 | OpenCode / agent-shell 命令 |
 | `C-c p` | 全局 | Cape 补全命令 |
 | `C-c P` | 全局 | project.el 前缀别名 |
 | `C-x p` | 全局；Evil 中也可用 | project.el 标准前缀 |
-| `gp` | Evil normal | project.el 前缀别名 |
+| `gp` | Evil normal（含 OpenCode/agent-shell 缓冲区） | project.el 前缀别名 |
 | `gr` | Evil normal；仅 Eglot 管理的缓冲区 | Eglot 前缀 |
 
 ## 补全与搜索
@@ -177,6 +180,7 @@
 | `C-x p d` | 查找并打开项目中的目录 |
 | `C-x p D` | 用 Dired 打开项目根目录 |
 | `C-x p v` | 打开项目的 `vc-dir` |
+| `C-x p m` | 打开当前项目的 Magit status |
 | `C-x p s` | 在项目根目录启动 shell |
 | `C-x p e` | 在项目根目录启动 Eshell |
 | `C-x p c` | 编译项目 |
@@ -196,6 +200,7 @@
 - `C-x p B` 未绑定；Ibuffer 没有启用。
 - `C-x p C-b` 使用 Emacs 默认 Buffer Menu。
 - `C-x p p` 的 dispatch 菜单中按 `b` 也使用 `consult-project-buffer`。
+- `C-x p p` 的 dispatch 菜单中按 `m` 打开 Magit status。
 
 ## Eglot 与 LSP
 
@@ -332,6 +337,86 @@ VTerm 内部：
 VTerm 由 `evil-collection` 提供 normal state 集成；新建终端默认进入 insert
 state。要在终端里运行 Vim、SSH 或另一个 Emacs 时，先用 `C-c C-z` 把 ESC
 交给终端。
+
+## OpenCode
+
+`C-c o` 是 OpenCode 前缀：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c o o` | 在当前项目启动或复用 OpenCode |
+| `C-c o n` | 强制启动新的 OpenCode 会话；默认会列出已有 session 供选择 |
+| `C-c o s` | 发送当前选区 |
+| `C-c o d` | 发送当前区域或错误（DWIM） |
+| `C-c o t` | 显示/隐藏 OpenCode 缓冲区 |
+
+OpenCode shell 内部：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `RET` | 提交 prompt |
+| `M-J` | 插入换行 |
+| `TAB` | 在三角形/标题上折叠/展开；普通位置跳到下一项 |
+| `C-c C-c` | 中断当前请求 |
+| `C-c C-r` | 发送当前选区 |
+| `C-c C-v` | 选择模型 |
+| `C-c C-m` | 选择 session mode |
+| `C-c C-t` | 选择 thought level |
+| `C-c C-o` | 打开 viewport |
+| `gp ...` | Evil normal state 下的 project.el 前缀，如 `gp f`、`gp p` |
+| `C-y` | 粘贴；剪贴板是图片时插入图片文件上下文 |
+
+OpenCode 缓冲区默认进入 Evil insert state；normal state 下也可以按 `RET` 提交。
+Agent 修改文件时产生的 diff 缓冲区默认进入 Evil Emacs state，可直接使用
+`y` / `n` / `p` / `q` 等按键。
+
+`evil-collection` 原本把 agent-shell normal state 的 `gp` 绑成
+`agent-shell-yank-dwim`，会遮住项目前缀并在 kill ring 为空时报
+`Kill ring is empty`。本配置已把 `gp` 恢复为 `project-prefix-map`，与普通
+缓冲区一致；图片粘贴仍使用 `C-y`。
+
+OpenCode 缓冲区通过 ACP 连接，`/` 只补全 `.opencode/commands/` 下的自定义
+命令和内置的 `/compact`；TUI 的 `/new`、`/sessions`、`/undo` 等命令不可用。
+
+`C-c o n` 会列出当前项目的已有 session；选择后会恢复该 session 的完整对话
+历史（`agent-shell-session-restore-verbosity` 为 `'full`）。如果希望自动恢复
+最近一次会话，可设置：
+
+```elisp
+(setq agent-shell-session-strategy 'latest)
+```
+
+## Git 与 Magit
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-x g` | 打开 Magit status |
+| `C-x p m` | 打开当前项目的 Magit status |
+| `C-t` / `\` | 切换 Magit text mode，便于自由移动和复制 |
+
+Magit 缓冲区中的常用 Evil 键（由 `evil-collection` 提供）：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `s` / `u` | 暂存 / 取消暂存 |
+| `c` | 提交 |
+| `P` / `p` | 推送 |
+| `f` / `F` | 获取 / 拉取 |
+| `l` | 查看日志 |
+| `d` | 查看 diff |
+| `TAB` | 展开/折叠当前 section |
+| `q` | 关闭当前 Magit 缓冲区 |
+| `C-t` / `\` | 切换 text mode |
+
+commit message 缓冲区默认进入 Evil insert state：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c C-c` | 完成提交 |
+| `C-c C-k` | 取消提交 |
+
+在 Magit status/diff 中选择区域后，可以用 `C-c o s` 发送给 OpenCode，或用
+`C-c o d` 发送当前区域/上下文。
 
 ## Org、Org-roam 与 org-download
 

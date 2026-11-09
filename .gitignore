@@ -10,6 +10,8 @@ var/autosave/
 var/backup/
 var/tramp-autosave/
 var/tramp
+var/agent-shell/
+var/agent/
 var/org-roam.db
 var/history
 var/recentf.eld

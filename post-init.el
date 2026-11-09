@@ -53,6 +53,12 @@
 ;; VTerm terminal with project-aware sessions and Evil integration.
 (require 'init-vterm)
 
+;; OpenCode integration through agent-shell (ACP).
+(require 'init-opencode)
+
+;; Magit integration and project.el Git entry point.
+(require 'init-magit)
+
 ;; Built-in UI conveniences: which-key, repeat-mode, winner-mode, and pixel
 ;; scrolling on graphical frames.
 (require 'init-ui)
