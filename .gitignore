@@ -12,11 +12,18 @@ var/tramp-autosave/
 var/tramp
 var/agent-shell/
 var/agent/
+var/.org-id-locations
 var/org-roam.db
 var/history
 var/recentf.eld
 var/saveplace
 var/bookmarks
+var/desktop/
+var/eshell/
+var/transient/
+var/url/
+var/cache/
+var/abbrev_defs
 var/*.eld
 
 # Native-compilation cache created before user-emacs-directory is redirected

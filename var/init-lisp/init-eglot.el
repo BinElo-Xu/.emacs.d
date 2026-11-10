@@ -139,7 +139,7 @@ manually with `M-x eglot' instead."
       (dolist (mode modes)
         ;; Run after other mode-hook functions (for example a hook that
         ;; prepares a project-local environment) instead of before them.
-        (add-hook (intern (format "%s-hook" mode)) #'eglot-ensure -90)))))
+        (add-hook (intern (format "%s-hook" mode)) #'eglot-ensure 90)))))
 
 ;;; Keymap
 

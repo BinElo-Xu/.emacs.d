@@ -34,11 +34,13 @@
 │   │   ├── init-vterm.el        # VTerm 终端与 Evil 集成
 │   │   ├── init-opencode.el     # OpenCode 与 agent-shell ACP 集成
 │   │   ├── init-magit.el        # Magit、Git 与 Evil/项目集成
-│   │   └── init-ui.el           # which-key、repeat、winner 与像素滚动
+│   │   ├── init-ui.el           # which-key、repeat、winner 与像素滚动
+│   │   └── init-desktop.el      # 恢复上次会话的缓冲区与窗口布局
 │   ├── elpa/               # 安装的包（不纳入 Git）
 │   ├── eln-cache/          # 原生编译缓存（不纳入 Git）
 │   ├── tree-sitter/        # Tree-sitter 语法库（不纳入 Git）
 │   ├── autosave/           # 自动保存文件（不纳入 Git）
+│   ├── desktop/            # Desktop 会话文件（不纳入 Git）
 │   ├── org-roam.db         # Org-roam 数据库（不纳入 Git）
 │   └── ...                 # 历史、recentf、saveplace 等运行时数据
 ├── SHORTCUTS.md            # 快捷键速查表
@@ -51,7 +53,7 @@
 
 ## 环境要求
 
-- Emacs 29.1 或更新版本（当前验证版本：31.1）
+- Emacs 31.1 或更新版本（推荐并验证于 31.1；29/30 仅部分兼容）
 - Linux
 - `uv`（用于创建 Python 虚拟环境，以及在未安装语言服务器时通过 `uvx` 启动 basedpyright）
 - `clangd`（用于 C/C++ 的 Eglot 语言服务器；可通过发行版包管理器安装）
@@ -97,6 +99,24 @@ M-x package-refresh-contents
 16. `init-opencode`：OpenCode、agent-shell、ACP 与 Evil 集成
 17. `init-magit`：Magit、Git、Evil Magit 状态与项目入口
 18. `init-ui`：`which-key`、`repeat-mode`、`winner-mode` 与像素滚动
+19. `init-desktop`：恢复上次退出时的缓冲区、光标位置和窗口布局
+
+## 会话恢复（Desktop）
+
+`var/init-lisp/init-desktop.el` 使用 Emacs 内置的 `desktop` 包：
+
+- 退出时自动保存打开的**文件缓冲区**、光标位置、窗口和 frame 布局；
+- 下次启动时自动恢复，并重新打开上次的文件；
+- 桌面文件保存到 `~/.emacs.d/var/desktop/emacs.desktop`，由 `.gitignore` 排除；
+- 只保存访问文件的缓冲区；`*Messages*`、`*scratch*`、VTerm、agent-shell
+  等临时或进程相关缓冲区不会恢复；
+- 如果上次 Emacs 异常退出，`desktop-load-locked-desktop 'check-pid` 会检查
+  锁文件对应的进程是否还在，避免无谓的锁提示；
+- 在 daemon 模式下只恢复缓冲区，不尝试重建图形 frame。
+
+如果不希望自动恢复，可以在 `init-desktop.el` 中把
+`(desktop-save-mode 1)` 改为 `(desktop-save-mode -1)`，或在 `post-init.el`
+中删除 `(require 'init-desktop)`。
 
 ## 代码补全（Corfu）
 
@@ -266,6 +286,29 @@ minimal-emacs.d 在 `init.el` 中设置 `enable-local-eval nil`，默认禁止�
 
 如果笔记根目录发生变化，修改 `init-clipboard.el` 中的 `my/notes-directory`，
 或通过 Customize 设置该变量。
+
+## Org Agenda
+
+`C-c a` 打开 Org Agenda，`C-c a g` 进入配置好的 GTD 视图。
+
+- `org-agenda-files` 直接指向 `~/Notes/agenda/` 目录，因此该目录下新增的
+  `.org` 文件会自动纳入 Agenda；
+- `org-agenda-sticky` 已关闭，再次执行 `C-c a` 会重新生成 Agenda，而不是
+  显示第一次生成的旧缓冲区；
+- 在 Agenda 中用 `C-c C-t` 切换 TODO 状态后，会自动执行 `org-agenda-redo`，
+  让当前视图立即按新状态重新过滤；
+- 仍然可以用 `g` 手动刷新当前 Agenda；
+- `C-c C-w` 的 refile 目标覆盖 `~/Notes/agenda/` 下的全部 Agenda 文件，
+  因此可以在 `inbox.org`、`projects.org`、`habbits.org`、`archive.org` 之间
+  相互 refile；
+- refile 候选项包含文件路径，便于区分不同文件中的同名标题；
+- 状态变化日志写入任务自己的 `:LOGBOOK:` drawer，不会散落在任务标题下方；
+- `C-c c t` 创建新的 TODO，写入 `~/Notes/agenda/inbox.org`；该文件通过
+  `#+FILETAGS: INBOX` 给新条目继承 `INBOX` 标签；
+- `C-c c n` 创建带 `:NOTE:` 标签的笔记。
+
+Agenda 中继承的文件标签会显示为类似 `:INBOX::` 的形式，末尾的双冒号是
+Org 用来标记“继承标签”的显示方式，不是重复标签或文件损坏。
 
 ## 项目（project.el）
 
@@ -839,7 +882,8 @@ Magit 与项目集成：
 - `var/tree-sitter/`：自动编译的 Tree-sitter 语法库
 - `var/autosave/`、`var/history`、`var/recentf.eld`、`var/saveplace`
 - `var/projects.eld`：project.el 记住的项目列表
-- `var/tramp`、`var/bookmarks`：Tramp 连接历史和书签
+- `var/.org-id-locations`、`var/tramp`、`var/bookmarks`：Org ID、Tramp 连接历史和书签
 - `var/agent-shell/`、`var/agent/`：OpenCode/agent-shell 的会话记录、截图和全局历史
+- `var/desktop/`：Desktop 会话文件（缓冲区列表和窗口布局）
 - `var/org-roam.db`：从笔记自动生成的数据库
 - 顶层遗留的 `elpa/` 目录

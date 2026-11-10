@@ -14,18 +14,19 @@
   (setq compile-angel-verbose nil)
 
   ;; The following directive prevents compile-angel from compiling your init
-  ;; files. If you choose to remove this push to `compile-angel-excluded-files'
-  ;; and compile your pre/post-init files, ensure you understand the
+  ;; files. If you choose to remove this push to
+  ;; `compile-angel-excluded-path-suffixes' and compile your pre/post-init
+  ;; files, ensure you understand the
   ;; implications and thoroughly test your code. For example, if you're using
   ;; the `use-package' macro, you'll need to explicitly add:
   ;; (eval-when-compile (require 'use-package))
   ;; at the top of your init file.
-  (push "/init.el" compile-angel-excluded-files)
-  (push "/early-init.el" compile-angel-excluded-files)
-  (push "/pre-init.el" compile-angel-excluded-files)
-  (push "/post-init.el" compile-angel-excluded-files)
-  (push "/pre-early-init.el" compile-angel-excluded-files)
-  (push "/post-early-init.el" compile-angel-excluded-files)
+  (push "/init.el" compile-angel-excluded-path-suffixes)
+  (push "/early-init.el" compile-angel-excluded-path-suffixes)
+  (push "/pre-init.el" compile-angel-excluded-path-suffixes)
+  (push "/post-init.el" compile-angel-excluded-path-suffixes)
+  (push "/pre-early-init.el" compile-angel-excluded-path-suffixes)
+  (push "/post-early-init.el" compile-angel-excluded-path-suffixes)
 
   ;; A local mode that compiles .el files whenever the user saves them.
   ;; (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode)

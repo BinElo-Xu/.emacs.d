@@ -167,6 +167,10 @@ Signal a user error when clangd is not available in `exec-path'."
   (add-to-list 'auto-mode-alist
                '("\\(?:CMakeLists\\.txt\\|\\.cmake\\)\\'" . cmake-ts-mode)))
 
+(defun my/c-c++-spaces-setup ()
+  "Indent configuration and build files with spaces."
+  (setq-local indent-tabs-mode nil))
+
 ;; Meson build files have no built-in major mode in Emacs 31.
 (use-package meson-mode
   :ensure t
@@ -194,10 +198,6 @@ Signal a user error when clangd is not available in `exec-path'."
   (setq-local makefile-cleanup-continuations nil))
 
 (add-hook 'makefile-mode-hook #'my/c-c++-makefile-setup)
-
-(defun my/c-c++-spaces-setup ()
-  "Indent configuration and build files with spaces."
-  (setq-local indent-tabs-mode nil))
 
 (dolist (hook '(cmake-ts-mode-hook yaml-ts-mode-hook json-ts-mode-hook))
   (add-hook hook #'my/c-c++-spaces-setup))

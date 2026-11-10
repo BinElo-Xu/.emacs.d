@@ -154,7 +154,11 @@
                  nil
                  (window-parameters (mode-line-format . none)))))
 
-(use-package embark-consult)
+;; Load Embark's Consult integration only after Embark and Consult have been
+;; loaded.  Without `:after', use-package loads it eagerly at startup and pulls
+;; both packages in with it.
+(use-package embark-consult
+  :after (embark consult))
 
 ;; Consult offers a suite of commands for efficient searching, previewing, and
 ;; interacting with buffers, file contents, and more, improving various tasks.

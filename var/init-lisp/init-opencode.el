@@ -76,7 +76,7 @@ without first entering Evil insert state."
         (agent-shell-make-environment-variables :inherit-env t))
   ;; Replay the whole conversation when a session is resumed.  The default
   ;; `minimal' only restores the session title.
-  (setq agent-shell-session-restore-verbosity 'full)
+  (setq agent-shell-session-restore-verbosity 'last)
   (setq agent-shell-dot-subdir-function #'my/opencode--dot-subdir)
   (add-hook 'agent-shell-mode-hook #'my/opencode-mode-setup)
   (add-hook 'agent-shell-diff-mode-hook #'my/opencode-diff-mode-setup)

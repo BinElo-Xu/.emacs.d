@@ -424,6 +424,8 @@ commit message 缓冲区默认进入 Evil insert state：
 | --- | --- | --- |
 | `C-c a` | 全局 | `org-agenda` |
 | `C-c c` | 全局 | `org-capture` |
+| `C-c c t` | Capture | 新建 TODO 到 `inbox.org` |
+| `C-c c n` | Capture | 新建带 `:NOTE:` 标签的笔记 |
 | `C-c l` | 全局 | `org-store-link` |
 | `C-c g` | Org mode | 插入剪贴板图片（`org-download-clipboard`） |
 | `C-M-i` | Org mode | `completion-at-point` |
@@ -434,6 +436,17 @@ commit message 缓冲区默认进入 Evil insert state：
 | `C-c n b` | 全局 | `consult-org-roam-backlinks` |
 | `C-c n s` | 全局 | `consult-org-roam-search` |
 | `C-c n d` | 全局 | Org-roam dailies 前缀 |
+
+Agenda 中：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `g` | 手动刷新当前 Agenda |
+| `C-c C-t` | 切换 TODO 状态并自动刷新 Agenda |
+| `C-c C-w` | refile 到任意 agenda 文件中的标题 |
+
+`C-c a` 会重新生成 Agenda，不会复用第一次进入时的旧内容。状态变化日志会写入
+任务的 `:LOGBOOK:` drawer。
 
 ### `C-c n d` 的 dailies 子键
 

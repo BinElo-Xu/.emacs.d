@@ -13,14 +13,17 @@
   (setq org-hide-leading-stars t)
   (setq org-startup-indented t)
   (setq org-adapt-indentation nil)
-  (setq org-edit-src-content-indentation 0)
+  (setq org-src-content-indentation 0)
   (setq org-directory (expand-file-name "~/Notes/"))
   (setq my/notes-directory org-directory)
   ;; (setq org-fontify-done-headline t)
   ;; (setq org-fontify-todo-headline t)
   ;; (setq org-fontify-whole-heading-line t)
   ;; (setq org-fontify-quote-and-verse-blocks t)
-  (setq org-startup-truncated t)
+  ;; Org derives from `text-mode', where init-visual-line enables
+  ;; `visual-line-mode'.  Keep the two settings consistent instead of asking
+  ;; Org to truncate lines and then immediately overriding it.
+  (setq org-startup-truncated nil)
   :bind
   (("C-c a" . org-agenda)
    ("C-c c" . org-capture)
@@ -31,18 +34,23 @@
 (setq org-capture-templates
       (let ((inbox (expand-file-name "agenda/inbox.org" org-directory)))
         `(("t" "todo" entry (file ,inbox)
-           "* next %?\n%u\n" :clock-resume t)
+           "* TODO %?\n%u\n" :clock-resume t)
           ("n" "note" entry (file ,inbox)
            "* %? :NOTE:\n%U\n%a\n" :clock-resume t))))
 
-;; add some file to org-agenda file.
-(setq org-agenda-files
-      (mapcar (lambda (file)
-                (expand-file-name file org-directory))
-              '("agenda/inbox.org"
-                "agenda/todo.org"
-                "agenda/habbits.org"
-                "agenda/archive.org")))
+;; All Org files in the agenda directory are part of the agenda.  Keeping the
+;; directory here also picks up files created later by capture or other tools.
+(setq org-agenda-files (list (expand-file-name "agenda/" org-directory)))
+
+;; Allow refiling between every agenda file.  The file path is included in the
+;; completion candidate so different files with similar headings are clear.
+(setq org-refile-targets '((org-agenda-files :maxlevel . 3))
+      org-refile-use-outline-path 'file
+      org-refile-allow-creating-parent-nodes 'confirm)
+
+;; Keep state-change notes in the conventional :LOGBOOK: drawer instead of
+;; writing them directly below the task heading.
+(setq org-log-into-drawer t)
 
 
 ;; when cursor is on the link, link content will 
@@ -72,7 +80,7 @@
 
 (let ((active-project-match (car org-stuck-projects)))
   (setq org-agenda-compact-blocks t
-        org-agenda-sticky t
+        org-agenda-sticky nil
         org-agenda-start-on-weekday nil
         org-agenda-span 'day
         org-agenda-include-diary nil
@@ -151,6 +159,17 @@
 
 (add-hook 'org-agenda-mode-hook 'hl-line-mode)
 
+(defun my/org-agenda-refresh-after-todo (&rest _)
+  "Refresh the agenda after a TODO state change in the agenda buffer."
+  (when (derived-mode-p 'org-agenda-mode)
+    (org-agenda-redo)))
+
+(with-eval-after-load 'org-agenda
+  (unless (advice-member-p #'my/org-agenda-refresh-after-todo
+                           'org-agenda-todo)
+    (advice-add 'org-agenda-todo :after
+                #'my/org-agenda-refresh-after-todo)))
+
 ;;; Org-roam
 
 (use-package org-roam
@@ -205,7 +224,7 @@
       "* %?"
       :target
       (file+head "%<%Y-%m-%d>.org"
-                 "#+title: %<%Y-%m-%d>\n"))))
+                 "#+title: %<%Y-%m-%d>\n#+author: BinElo\n"))))
 
   :bind-keymap
   ("C-c n d" . org-roam-dailies-map)
@@ -250,6 +269,24 @@
    consult-org-roam-file-find
    consult-org-roam-search
    :preview-key nil))
+
+;; The `:after org-roam' forms above are deferred until Org-roam is first
+;; loaded, which would leave their bindings unavailable on a fresh session.
+;; Bind the commands eagerly here; they are autoloaded, so pressing them loads
+;; Org-roam (and the relevant extension) on demand.
+(keymap-global-set "C-c n b" #'consult-org-roam-backlinks)
+(keymap-global-set "C-c n s" #'consult-org-roam-search)
+(keymap-global-set "C-c n u" #'org-roam-ui-mode)
+
+(defvar my/org-roam-dailies-prefix-map
+  (let ((map (make-sparse-keymap)))
+    (keymap-set map "d" #'org-roam-dailies-capture-today)
+    (keymap-set map "Y" #'org-roam-dailies-capture-yesterday)
+    (keymap-set map "T" #'org-roam-dailies-capture-tomorrow)
+    map)
+  "Prefix map for Org-roam dailies, bound to `C-c n d'.")
+
+(keymap-global-set "C-c n d" my/org-roam-dailies-prefix-map)
 
 (provide 'init-org)
 

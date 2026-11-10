@@ -5,3 +5,9 @@
 (setq user-emacs-directory (expand-file-name "var/" minimal-emacs-user-directory))
 (setq package-user-dir (expand-file-name "elpa" user-emacs-directory))
 
+;; `native-comp-eln-load-path' is initialized before early-init runs, so it
+;; still points at "~/.emacs.d/eln-cache" unless it is redirected here.
+(when (fboundp 'startup-redirect-eln-cache)
+  (startup-redirect-eln-cache
+   (expand-file-name "eln-cache/" user-emacs-directory)))
+

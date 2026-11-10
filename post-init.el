@@ -63,3 +63,8 @@
 ;; scrolling on graphical frames.
 (require 'init-ui)
 
+;; Restore the buffers and window layout from the previous Emacs session.
+;; Loaded last so restored buffers see all major modes, Eglot, Evil, and the
+;; other integrations already configured.
+(require 'init-desktop)
+
