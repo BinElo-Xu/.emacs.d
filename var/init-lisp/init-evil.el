@@ -108,3 +108,4 @@
 
 (provide 'init-evil)
 
+;; init-evil ends here.

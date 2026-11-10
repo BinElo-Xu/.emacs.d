@@ -22,6 +22,9 @@
 ;; evil relative configuration.
 (require 'init-evil)
 
+;; Multiple cursors for Evil, grouped under the `C-c M' prefix.
+(require 'init-multicursor)
+
 ;; project.el integration: project list, dispatch menu, and Evil-friendly
 ;; project keybindings.
 (require 'init-project)

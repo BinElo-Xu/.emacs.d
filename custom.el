@@ -6,7 +6,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    '(agent-shell cape compile-angel consult consult-org-roam corfu embark
-                 embark-consult evil evil-collection evil-surround
+                 embark-consult evil evil-collection evil-mc evil-surround
                  exec-path-from-shell goto-chg magit marginalia meson-mode
                  orderless org-appear org-download org-roam org-roam-ui vertico
                  visual-fill-column vterm)))

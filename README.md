@@ -23,6 +23,7 @@
 │   │   ├── init-file.el
 │   │   ├── init-completion.el
 │   │   ├── init-evil.el
+│   │   ├── init-multicursor.el  # evil-mc 多光标
 │   │   ├── init-project.el      # project.el、项目列表与 Evil 项目键位
 │   │   ├── init-minibuffer.el   # minibuffer 的 Evil 风格按键
 │   │   ├── init-visual-line.el  # 视觉行换行
@@ -87,19 +88,20 @@ M-x package-refresh-contents
 4. `init-file`：`recentf`、`savehist`、`saveplace`、`auto-revert`
 5. `init-completion`：Corfu、Cape、Vertico、Marginalia、Orderless、Embark
 6. `init-evil`：Evil 及相关扩展
-7. `init-project`：project.el、项目列表、项目切换与 Evil 项目键位
-8. `init-minibuffer`：minibuffer 的 Evil 风格按键
-9. `init-visual-line`：`visual-line-mode` 与 `visual-fill-column`
-10. `init-org`：Org、Org-roam、Org-roam-ui、Consult 集成
-11. `init-treesit`：Tree-sitter 自动安装与 major mode remap
-12. `init-eglot`：Eglot 通用配置、快捷键和语言服务器注册辅助
-13. `init-python`：Python 模式、uv 虚拟环境、basedpyright/pyright 语言服务器
-14. `init-c-c++`：C/C++ Tree-sitter 模式、clangd、Makefile/CMake 编辑与 C/C++ 项目根目录
-15. `init-vterm`：VTerm 终端、项目级会话与 Evil 集成
-16. `init-opencode`：OpenCode、agent-shell、ACP 与 Evil 集成
-17. `init-magit`：Magit、Git、Evil Magit 状态与项目入口
-18. `init-ui`：`which-key`、`repeat-mode`、`winner-mode` 与像素滚动
-19. `init-desktop`：恢复上次退出时的缓冲区、光标位置和窗口布局
+7. `init-multicursor`：`evil-mc` 多光标编辑
+8. `init-project`：project.el、项目列表、项目切换与 Evil 项目键位
+9. `init-minibuffer`：minibuffer 的 Evil 风格按键
+10. `init-visual-line`：`visual-line-mode` 与 `visual-fill-column`
+11. `init-org`：Org、Org-roam、Org-roam-ui、Consult 集成
+12. `init-treesit`：Tree-sitter 自动安装与 major mode remap
+13. `init-eglot`：Eglot 通用配置、快捷键和语言服务器注册辅助
+14. `init-python`：Python 模式、uv 虚拟环境、basedpyright/pyright 语言服务器
+15. `init-c-c++`：C/C++ Tree-sitter 模式、clangd、Makefile/CMake 编辑与 C/C++ 项目根目录
+16. `init-vterm`：VTerm 终端、项目级会话与 Evil 集成
+17. `init-opencode`：OpenCode、agent-shell、ACP 与 Evil 集成
+18. `init-magit`：Magit、Git、Evil Magit 状态与项目入口
+19. `init-ui`：`which-key`、`repeat-mode`、`winner-mode` 与像素滚动
+20. `init-desktop`：恢复上次退出时的缓冲区、光标位置和窗口布局
 
 ## 会话恢复（Desktop）
 
@@ -224,6 +226,53 @@ minibuffer，请使用 `RET` 确认。
 
 Ex 命令行（`:`）和搜索提示（`/`、`?`）使用独立的键位表，配置同样为它们设置
 了 `C-j` / `C-k` 的历史导航，以及 `C-h` / `C-e` 的编辑行为。
+
+## 多光标（evil-mc）
+
+`var/init-lisp/init-multicursor.el` 使用 `evil-mc` 提供 Evil 风格的多光标。
+它只在编程、配置和文本缓冲区（包括 Org）中自动启用，终端、REPL 和特殊缓冲区
+不会启用。
+
+按键由 `evil-collection` 的 evil-mc 集成提供，使用 `g.` 前缀。该集成会清除
+evil-mc 默认的直接按键（`C-n`、`C-p`、`C-t`、`M-n`、`M-p`），从而避免覆盖
+Evil 的粘贴历史、`pop-tag-mark` 以及 Eglot 的 `gr` 前缀。
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `g. n` / `g. N` | 在下一个 / 上一个匹配处添加光标 |
+| `g. a` | 在所有匹配处添加光标 |
+| `g. C-m` | 在当前位置添加一个光标 |
+| `g. o` / `g. O` | 在下一行 / 上一行添加光标 |
+| `g. I` / `g. A` | 在可视选区开头 / 结尾添加光标 |
+| `g. C-n` / `g. C-S-n` | 跳到下一个 / 上一个匹配，但不添加光标 |
+| `g. M-n` / `g. M-N` | 跳到下一个 / 上一个已有光标 |
+| `g. C-u` / `g. C-S-u` | 在已有光标之间前后跳过 |
+| `g. u` / `g. q` | 撤销最近添加 / 全部光标 |
+| `g. C-p` / `g. C-r` | 暂停 / 恢复多光标 |
+| `g. 0` / `g. $` | 跳到第一个 / 最后一个光标 |
+
+典型流程：把光标放在一个单词上，按 `g. n` 逐个添加下一个匹配，或按
+`g. a` 选中全部匹配；编辑完成后按 `g. q` 清除所有光标。
+
+`g. n` / `g. N` 支持数字前缀。例如：
+
+- `3 g. n`：在当前匹配处开始，连续添加 3 个匹配（当前 + 后两个）；
+- `5 g. N`：向反方向连续添加 5 个匹配；
+- `3 g. o` / `3 g. O`：在下面 / 上面连续 3 行添加光标。
+
+如果只想标记**当前匹配之后**的若干项，先用 `g. C-n` 跳到下一个匹配，再按
+`3 g. n` 即可。
+
+`g. n` / `g. N` 之后还会进入一个临时的重复状态：
+
+| 按键 | 功能 |
+| --- | --- |
+| `;` | 继续在下一个匹配处添加光标 |
+| `,` | 向相反方向添加光标 |
+
+例如按一次 `g. n`，再连续按 `;`，就会逐个标记后续匹配；按任意其他键即可退出
+这个重复状态，`;` 恢复为 Evil 默认的重复 `f`/`F`/`t`/`T` 行为。`;` 也支持数字
+前缀，例如 `3 ;` 会一次再标记 3 个匹配。
 
 ## org-download
 
