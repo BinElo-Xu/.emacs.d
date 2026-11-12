@@ -20,6 +20,7 @@ var/saveplace
 var/bookmarks
 var/desktop/
 var/eshell/
+var/ltximg/
 var/transient/
 var/url/
 var/cache/

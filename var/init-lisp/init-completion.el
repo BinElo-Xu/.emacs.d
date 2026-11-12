@@ -55,7 +55,10 @@
 ;; by providing additional backends through completion-at-point-functions.
 (use-package cape
   :commands (cape-dabbrev cape-file cape-elisp-block cape-keyword)
-  :bind ("C-c p" . cape-prefix-map)
+  ;; `cape-prefix-map' is a keymap variable, not a command, and cape is loaded
+  ;; lazily.  `:bind-keymap' installs an auto-loading prefix key so `C-c p'
+  ;; works before cape is loaded; plain `:bind' would leave the symbol void.
+  :bind-keymap ("C-c p" . cape-prefix-map)
   :init
   ;; Add to the global default value of `completion-at-point-functions' which is
   ;; used by `completion-at-point'.  These are fallbacks: language servers and

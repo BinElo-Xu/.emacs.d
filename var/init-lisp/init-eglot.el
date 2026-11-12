@@ -18,6 +18,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'eglot)
 (require 'project)
 (require 'seq)

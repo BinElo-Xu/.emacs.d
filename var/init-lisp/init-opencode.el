@@ -65,7 +65,8 @@ without first entering Evil insert state."
              agent-shell-opencode-start-agent
              agent-shell-toggle
              agent-shell-send-region
-             agent-shell-send-dwim)
+             agent-shell-send-dwim
+             agent-shell-yank-dwim)
   :init
   ;; OpenCode is the only agent launched by this configuration.
   (setq agent-shell-preferred-agent-config 'opencode)
@@ -116,6 +117,7 @@ without first entering Evil insert state."
     (keymap-set map "s" #'agent-shell-send-region)
     (keymap-set map "d" #'agent-shell-send-dwim)
     (keymap-set map "t" #'agent-shell-toggle)
+    (keymap-set map "y" #'agent-shell-yank-dwim)
     map)
   "Prefix map for OpenCode, bound to `C-c o'.")
 

@@ -22,6 +22,7 @@
 (require 'init-treesit)
 (require 'project)
 (require 'seq)
+(require 'subr-x)
 
 ;;; Project roots and ignores
 

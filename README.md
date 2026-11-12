@@ -4,6 +4,17 @@
 1.5.2 为起点，并遵循它的设计：上游的 `early-init.el`、`init.el` 保持原样，
 个人配置写在 `pre-init.el`、`post-init.el` 和 `var/init-lisp/` 中。
 
+## 文档导航
+
+- 基础：目录结构、环境要求、启动与安装、模块加载顺序、Desktop
+- 编辑：补全、视觉换行、Minibuffer、多光标、Evil 集成
+- 笔记：org-download、Org Agenda、Org-roam、LaTeX/Org/PDF
+- 开发：project.el、Eglot、Python、C/C++、Tree-sitter
+- 工具：VTerm、OpenCode、Magit
+- 界面：窗口、字体、常用快捷键、版本控制
+
+README 说明配置和行为；[SHORTCUTS.md](SHORTCUTS.md) 是按键速查表。
+
 ## 目录结构
 
 ```text
@@ -18,6 +29,7 @@
 ├── var/
 │   ├── init-lisp/
 │   │   ├── init-theme.el
+│   │   ├── init-font.el        # 中英文字体（霞鹜文楷等宽）
 │   │   ├── init-sysEnv.el
 │   │   ├── init-clipboard.el   # 剪贴板、org-download
 │   │   ├── init-file.el
@@ -28,6 +40,8 @@
 │   │   ├── init-minibuffer.el   # minibuffer 的 Evil 风格按键
 │   │   ├── init-visual-line.el  # 视觉行换行
 │   │   ├── init-org.el
+│   │   ├── init-latex.el        # Org 公式预览、AUCTeX/RefTeX/CDLaTeX
+│   │   ├── init-pdf.el          # PDF 阅读（pdf-tools）、主题与按键
 │   │   ├── init-treesit.el      # Tree-sitter 自动安装与 mode remap
 │   │   ├── init-eglot.el        # Eglot 通用配置与语言服务器注册辅助
 │   │   ├── init-python.el       # Python、uv 与 Eglot 的 Python 集成
@@ -35,7 +49,7 @@
 │   │   ├── init-vterm.el        # VTerm 终端与 Evil 集成
 │   │   ├── init-opencode.el     # OpenCode 与 agent-shell ACP 集成
 │   │   ├── init-magit.el        # Magit、Git 与 Evil/项目集成
-│   │   ├── init-ui.el           # which-key、repeat、winner 与像素滚动
+│   │   ├── init-ui.el           # which-key、窗口切换、像素滚动
 │   │   └── init-desktop.el      # 恢复上次会话的缓冲区与窗口布局
 │   ├── elpa/               # 安装的包（不纳入 Git）
 │   ├── eln-cache/          # 原生编译缓存（不纳入 Git）
@@ -63,6 +77,11 @@
 - Git 和 C 编译器（首次自动编译 Tree-sitter 语法时需要）
 - `cmake` 和 `libvterm`（VTerm 模块首次编译时需要；没有系统 libvterm 时还需要
   `libtool`）
+- XeLaTeX（默认 LaTeX 引擎，通常由 `texlive-xetex` 提供）；如果改用
+  pdfLaTeX/LuaLaTeX，需要对应的 TeX 引擎
+- `dvipng`（Org 公式预览使用；也可以用 `dvisvgm`）
+- Poppler 开发头文件、`gcc` 和 `make`（pdf-tools 的 `epdfinfo` 首次编译需要）
+- 可选：`latexmk`、`biber`（使用自动构建或 biblatex 时需要）
 - Wayland 下从剪贴板读取图片需要 `wl-clipboard`（提供 `wl-paste`）；
   X11 下需要 `xclip`
 - 首次安装缺失包时需要访问 MELPA、GNU ELPA 或 NonGNU ELPA
@@ -83,25 +102,28 @@ M-x package-refresh-contents
 `post-init.el` 按以下顺序加载各模块：
 
 1. `init-theme`：加载内置 `tango-dark` 主题
-2. `init-sysEnv`：`compile-angel` 与平台环境变量
-3. `init-clipboard`：系统剪贴板与 `org-download`
-4. `init-file`：`recentf`、`savehist`、`saveplace`、`auto-revert`
-5. `init-completion`：Corfu、Cape、Vertico、Marginalia、Orderless、Embark
-6. `init-evil`：Evil 及相关扩展
-7. `init-multicursor`：`evil-mc` 多光标编辑
-8. `init-project`：project.el、项目列表、项目切换与 Evil 项目键位
-9. `init-minibuffer`：minibuffer 的 Evil 风格按键
-10. `init-visual-line`：`visual-line-mode` 与 `visual-fill-column`
-11. `init-org`：Org、Org-roam、Org-roam-ui、Consult 集成
-12. `init-treesit`：Tree-sitter 自动安装与 major mode remap
-13. `init-eglot`：Eglot 通用配置、快捷键和语言服务器注册辅助
-14. `init-python`：Python 模式、uv 虚拟环境、basedpyright/pyright 语言服务器
-15. `init-c-c++`：C/C++ Tree-sitter 模式、clangd、Makefile/CMake 编辑与 C/C++ 项目根目录
-16. `init-vterm`：VTerm 终端、项目级会话与 Evil 集成
-17. `init-opencode`：OpenCode、agent-shell、ACP 与 Evil 集成
-18. `init-magit`：Magit、Git、Evil Magit 状态与项目入口
-19. `init-ui`：`which-key`、`repeat-mode`、`winner-mode` 与像素滚动
-20. `init-desktop`：恢复上次退出时的缓冲区、光标位置和窗口布局
+2. `init-font`：默认字体与中文字体集（霞鹜文楷等宽）
+3. `init-sysEnv`：`compile-angel` 与平台环境变量
+4. `init-clipboard`：系统剪贴板与 `org-download`
+5. `init-file`：`recentf`、`savehist`、`saveplace`、`auto-revert`
+6. `init-completion`：Corfu、Cape、Vertico、Marginalia、Orderless、Embark
+7. `init-evil`：Evil 及相关扩展
+8. `init-multicursor`：`evil-mc` 多光标编辑
+9. `init-project`：project.el、项目列表、项目切换与 Evil 项目键位
+10. `init-minibuffer`：minibuffer 的 Evil 风格按键
+11. `init-visual-line`：`visual-line-mode` 与 `visual-fill-column`
+12. `init-org`：Org、Org-roam、Org-roam-ui、Consult 集成
+13. `init-latex`：Org 公式预览、AUCTeX/RefTeX/CDLaTeX
+14. `init-pdf`：PDF 阅读（`pdf-tools`）、主题跟随与 PDF 按键
+15. `init-treesit`：Tree-sitter 自动安装与 major mode remap
+16. `init-eglot`：Eglot 通用配置、快捷键和语言服务器注册辅助
+17. `init-python`：Python 模式、uv 虚拟环境、basedpyright/pyright 语言服务器
+18. `init-c-c++`：C/C++ Tree-sitter 模式、clangd、Makefile/CMake 编辑与 C/C++ 项目根目录
+19. `init-vterm`：VTerm 终端、项目级会话与 Evil 集成
+20. `init-opencode`：OpenCode、agent-shell、ACP 与 Evil 集成
+21. `init-magit`：Magit、Git、Evil Magit 状态与项目入口
+22. `init-ui`：`which-key`、`repeat-mode`、`winner-mode`、`ace-window` 与像素滚动
+23. `init-desktop`：恢复上次退出时的缓冲区、光标位置和窗口布局
 
 ## 会话恢复（Desktop）
 
@@ -209,10 +231,19 @@ Cape 都通过 CAPF 接入 Corfu。
 | `C-k` / `C-p` / `↑` | 选择上一个候选或历史项 |
 | `C-h` / `C-l` | 向左 / 向右移动一个字符 |
 | `C-a` / `C-e` | 移动到输入开头 / 末尾 |
+| `C-u` | `universal-argument` |
+| `C-w` | `kill-region` |
+| `C-r` | `isearch-backward` |
+| `C-y` | `yank` |
+| `C-d` | `delete-char` |
+| `C-t` | `transpose-chars` |
+| `TAB` / `C-i` | 补全；Vertico 中插入当前候选；普通 read-string 中插入 tab |
 | `RET` | 接受当前候选并退出 minibuffer |
 
 `C-h` 在 minibuffer 中被改成了向左移动，不再删除字符；删除请继续使用
-Backspace（`DEL`）。
+Backspace（`DEL`）。Evil insert state 原本会把 `C-u`、`C-w`、`C-r`、`C-y`、
+`C-d`、`C-t` 替换成适合普通缓冲区的 Vim 命令，这里统一恢复为编辑 minibuffer
+时应有的行为。
 
 在 `M-x`、`C-x C-f` 等使用 Vertico 的补全中，`C-j` / `C-k` 直接调用
 `vertico-next` / `vertico-previous`，可以用它们在命令或文件列表中上下切换；
@@ -220,9 +251,9 @@ Backspace（`DEL`）。
 `↓` / `↑` 仍然由 Vertico 处理。
 
 按下 `ESC` 后 minibuffer 进入 Evil 的 normal state，此时 `j` / `k` 同样用于
-切换候选，`h` / `l` 左右移动，`0` / `$` 跳到开头 / 末尾；按 `i` 返回 insert
-state，再按一次 `ESC` 取消输入。`C-j` 不再像 Emacs 默认那样直接退出
-minibuffer，请使用 `RET` 确认。
+切换候选，`h` / `l` 左右移动，`0` / `$` 跳到开头 / 末尾，`TAB` 补全或插入
+当前候选；按 `i` 返回 insert state，再按一次 `ESC` 取消输入。`C-j` 不再像
+Emacs 默认那样直接退出 minibuffer，请使用 `RET` 确认。
 
 Ex 命令行（`:`）和搜索提示（`/`、`?`）使用独立的键位表，配置同样为它们设置
 了 `C-j` / `C-k` 的历史导航，以及 `C-h` / `C-e` 的编辑行为。
@@ -230,8 +261,8 @@ Ex 命令行（`:`）和搜索提示（`/`、`?`）使用独立的键位表，�
 ## 多光标（evil-mc）
 
 `var/init-lisp/init-multicursor.el` 使用 `evil-mc` 提供 Evil 风格的多光标。
-它只在编程、配置和文本缓冲区（包括 Org）中自动启用，终端、REPL 和特殊缓冲区
-不会启用。
+它在编程、配置、文本（包括 Org）和 Dired 缓冲区中自动启用，终端、REPL 和其他
+特殊缓冲区不会启用。
 
 按键由 `evil-collection` 的 evil-mc 集成提供，使用 `g.` 前缀。该集成会清除
 evil-mc 默认的直接按键（`C-n`、`C-p`、`C-t`、`M-n`、`M-p`），从而避免覆盖
@@ -254,6 +285,9 @@ Evil 的粘贴历史、`pop-tag-mark` 以及 Eglot 的 `gr` 前缀。
 典型流程：把光标放在一个单词上，按 `g. n` 逐个添加下一个匹配，或按
 `g. a` 选中全部匹配；编辑完成后按 `g. q` 清除所有光标。
 
+Dired 中也会启用多光标；Dired 本身是只读缓冲区，如果需要修改多个文件名，
+先按 `C-x C-q` 进入 `wdired-mode`，编辑完成后再用 `C-c C-c` 提交。
+
 `g. n` / `g. N` 支持数字前缀。例如：
 
 - `3 g. n`：在当前匹配处开始，连续添加 3 个匹配（当前 + 后两个）；
@@ -273,6 +307,44 @@ Evil 的粘贴历史、`pop-tag-mark` 以及 Eglot 的 `gr` 前缀。
 例如按一次 `g. n`，再连续按 `;`，就会逐个标记后续匹配；按任意其他键即可退出
 这个重复状态，`;` 恢复为 Evil 默认的重复 `f`/`F`/`t`/`T` 行为。`;` 也支持数字
 前缀，例如 `3 ;` 会一次再标记 3 个匹配。
+
+## Evil 集成
+
+配置以 Evil 为主要编辑方式：`evil-mode` 全局启用，`evil-collection-init`
+加载各包的 Evil 绑定，`evil-collection-setup-minibuffer` 让 minibuffer 使用
+Evil insert state。特殊缓冲区的初始 state 如下：
+
+| 模式 | 初始 state | 说明 |
+| --- | --- | --- |
+| `pdf-view-mode` | `normal` | PDF 阅读、目录、`pdf-occur` |
+| `org-mode` / `org-agenda-mode` / `org-roam` | `normal` | `TAB` / `S-TAB` 由 evil-collection 绑定为 Org 的 cycle |
+| `org-capture-mode` | `normal` | evil-collection 的设计；按 `i` 输入，`ZZ`/`ZQ` 完成/取消 |
+| `dired-mode` / `wdired-mode` | `normal` | Dired 中启用 `evil-mc`；`wdired` 按 `i` 编辑文件名 |
+| `vterm-mode` | `insert` | `ESC` 回 normal，`C-c C-z` 切换 ESC 归属 |
+| `agent-shell-mode` | `insert` | `agent-shell-diff-mode` 使用 `emacs` state |
+| `magit-mode` 系列 | `normal` | commit message 使用 `insert` |
+| `shell-mode` / `eshell-mode` / `comint-mode` | `insert` | 可直接输入命令 |
+| `help-mode` / `occur-mode` / `compilation-mode` | `normal` | 只读或导航缓冲区 |
+
+键位约定：
+
+- `C-c` 在 Evil normal/insert state 下都没有被占用，所以 `C-c e`（Eglot）、
+  `C-c v`（Python/uv）、`C-c o`（OpenCode）、`C-c p`（Cape）、`C-c P`
+  （project.el）等前缀在所有 state 下都可用；
+- `C-x p` 是标准 project.el 前缀；`gp` 是 Evil normal state 的别名（Evil 默认
+  没有绑定 `gp`，不会冲突）；`C-c P` 可跨 state 使用；
+- `gr` 只在 Eglot 管理的缓冲区中是 LSP 前缀；`gd` / `K` / `C-t` 在 Eglot
+  缓冲区中分别改为跳转定义 / Eldoc 文档 / 跳回，其他缓冲区保持 Evil 默认；
+- `g.` 是 `evil-mc` 多光标前缀，`gc` 是注释操作符，`g;` / `g,` 跳到最近修改处；
+- `C-w` 在 normal state 仍是 Evil 的窗口前缀；minibuffer 中已恢复为
+  `kill-region`。`C-u` / `C-h` 在普通 insert state 中按 `evil-want-C-u-delete`
+  和 `evil-want-C-h-delete` 启用删除行为，minibuffer 中则恢复标准含义；
+- `M-o` 是 `ace-window`，会覆盖 Emacs 默认的 `facemenu-keymap`；如果不使用面部
+  菜单可以忽略。
+
+OpenCode 缓冲区中 `gp` 被有意改回 project 前缀；粘贴命令使用 `C-c o y`
+（`agent-shell-yank-dwim`），因为 Evil 在 insert/normal state 中分别占用了
+`C-y`。
 
 ## org-download
 
@@ -358,6 +430,91 @@ minimal-emacs.d 在 `init.el` 中设置 `enable-local-eval nil`，默认禁止�
 
 Agenda 中继承的文件标签会显示为类似 `:INBOX::` 的形式，末尾的双冒号是
 Org 用来标记“继承标签”的显示方式，不是重复标签或文件损坏。
+
+## Org-roam capture 模板
+
+`M-x org-roam-capture` 提供以下三个模板：
+
+| 键 | 模板 | 保存位置 |
+| --- | --- | --- |
+| `p` | project | `~/Notes/notes/projects/` |
+| `l` | literature | `~/Notes/notes/reference/` |
+| `z` | zettel(permanent) | `~/Notes/notes/permanent/` |
+
+模板使用 `:target` 和 `file+head`，文件名格式为 `%Y%m%d%H%M%S.org`。文件统一
+放在现有的 `notes/` 分类子目录中，不会在 `~/Notes/` 顶层创建 `projects/`、
+`reference/` 或 `permanent/` 目录。
+
+## LaTeX、Org 公式与 PDF
+
+配置分别位于 `var/init-lisp/init-latex.el`（Org 公式与 LaTeX 编辑）和
+`var/init-lisp/init-pdf.el`（PDF 阅读）。
+
+### PDF 阅读
+
+使用 `pdf-tools`，第一次打开 PDF 时才加载。结合 evil-collection 的
+`pdf-view` 集成，normal state 下常用键为：
+
+- `j` / `k`：向下 / 向上滚动一行，到页边时继续翻到下一页 / 上一页；
+- `C-j` / `C-k`：直接跳到下一页 / 上一页；
+- `SPC` / `S-SPC`（或 `C-f` / `C-b`）：向下 / 向上滚动，并可在页边翻页；
+- `gg` / `G` 或 `M-<` / `M->`：第一页 / 最后一页；
+- `/`：搜索 PDF 文本；`n` / `N`：下一个 / 上一个搜索结果；
+- `M-s o`：打开 `pdf-occur` 搜索结果列表；
+- `o`：打开目录（outline）；
+- `f` / `F`：跟随 PDF 链接 / 执行链接动作；
+- `Q`：关闭当前 PDF 缓冲区；
+- `z0` / `C-0`：恢复按页面宽度显示；
+- `C-=` / `C-+` / `C--`：放大 / 缩小 PDF 页面（不是文本缩放）；
+- `P`：适合整页。
+
+PDF 默认按 **页面宽度**（`fit-width`）排版，因此纵向分屏不会因为窗口变矮而把整页
+缩小到看不清。`W` / `H` 的 PDF 专用绑定已解除，现在分别是 Evil 的
+`evil-forward-WORD-begin` 和 `evil-window-top`；需要整页显示时按 `P`。
+
+PDF 页面颜色会跟随当前 Emacs 主题（`pdf-view-themed-minor-mode`）；切换主题时
+已经打开的 PDF 也会刷新。`pdf-tools` 和 Emacs 自带 PDF 阅读器一样，本质上是按页
+渲染图像，每个 buffer 同时显示一页；`pdf-view-continuous` 已开启，滚动到页边会
+继续翻到下一页，通常不需要为同一份 PDF 打开多个 buffer。如果需要真正的连续多页
+并排显示，建议使用外部 PDF 阅读器（如 Zathura/Okular）。
+
+### Org 公式预览图片缓存
+
+`org-latex-preview` 仍然需要在磁盘上生成预览图片。配置把预览图片集中到：
+
+```text
+~/.emacs.d/var/ltximg/<emacs-pid>/
+```
+
+不会在 `~/Notes/` 下创建 `ltximg/` 目录。每个 Emacs 会话使用独立的 PID
+子目录；启动时清理 PID 已经退出的会话留下的缓存，退出时删除当前会话的缓存。
+多个 Emacs 同时运行时不会互相删除正在使用的预览图。HTML/LaTeX 导出的图片不受
+这个预览缓存影响。
+
+### Org 公式
+
+- `org-fragtog-mode`：光标离开公式时自动渲染，进入公式时显示源码；
+- `C-c C-x C-l`：手动切换当前公式 / 当前节的预览；
+- `org-cdlatex-mode` 与 `cdlatex`：在 Org 公式中快速输入数学符号、上下标、
+  分式和环境。`org-cdlatex-mode` 会把 `'`、`^`、`_`、`` ` `` 等键接管为
+  数学输入辅助，离开公式后恢复普通编辑。
+- 如果系统的 TeX Live 缺少 `ulem.sty`，配置会自动从
+  `org-latex-default-packages-alist` 中移除 `ulem`，避免公式预览报
+  “File ...dvi wasn't produced”。
+
+### LaTeX 文件
+
+- 使用 AUCTeX 编辑 `.tex` 文件；
+- 默认引擎为 XeLaTeX（`TeX-engine 'xetex`），适合中文文档；
+- `C-c C-c`：编译；
+- `C-c C-v`：在 pdf-tools 中查看 PDF；
+- `C-c C-e` / `C-c C-s` / `C-c C-m`：插入环境 / 章节 / 宏；
+- `reftex-mode` 提供引用、交叉引用和标签补全；
+- `cdlatex-mode` 提供数学输入辅助；
+- `TeX-source-correlate-mode` 与 SyncTeX 已启用，可在源码和 PDF 之间跳转。
+
+如果项目需要 pdfLaTeX 或 LuaLaTeX，只需把 `init-latex.el` 中的
+`TeX-engine` 改为 `'default` 或 `'luatex`。
 
 ## 项目（project.el）
 
@@ -779,9 +936,9 @@ opencode auth login
 | `C-c C-v` | 选择模型 |
 | `C-c C-m` | 选择 session mode |
 | `C-c C-t` | 选择 thought level |
-| `C-c C-o` | 打开 viewport |
+| `C-c C-o` | 切换到其他 agent-shell 缓冲区（`agent-shell-other-buffer`） |
+| `C-c o y` | 粘贴；剪贴板是图片时改为插入图片文件上下文 |
 | `gp ...` | Evil normal state 下的 project.el 前缀，如 `gp f`、`gp p` |
-| `C-y` | 粘贴；剪贴板是图片时改为插入图片文件上下文 |
 
 OpenCode 缓冲区默认进入 Evil insert state；normal state 下也可以直接按 `RET`
 提交。Agent 修改文件时产生的 diff 缓冲区默认进入 Evil Emacs state，方便直接
@@ -791,8 +948,9 @@ OpenCode 缓冲区默认进入 Evil insert state；normal state 下也可以直�
 `agent-shell-yank-dwim`，会遮住全局的 `gp` → `project-prefix-map`；在 kill
 ring 为空时还会报 `Kill ring is empty`。本配置在 `init-opencode.el` 中把
 normal state 的 `gp` 改回 project 前缀，因此 OpenCode 缓冲区里的 `gp f`、
-`gp p`、`gp b` 等与普通缓冲区一致。剪贴板图片粘贴仍然可用，快捷键是 `C-y`
-（`agent-shell-mode-map` 中的 `<remap> <yank>`）。
+`gp p`、`gp b` 等与普通缓冲区一致。由于 Evil 在 insert/normal state 中分别
+占用了 `C-y`（复制上一行 / 向上滚动），粘贴命令统一放在 `C-c o y`
+（`agent-shell-yank-dwim`）。
 
 ### 斜杠命令
 
@@ -821,9 +979,10 @@ agent-shell 的 `/` 补全即可使用 `/continue`。
 
 ### 恢复会话与历史
 
-`agent-shell` 默认只恢复 session 标题，不显示历史对话。本配置已将
-`agent-shell-session-restore-verbosity` 设为 `'full`，恢复 session 时会完整
-回放之前的对话历史。
+`agent-shell` 默认只恢复 session 标题，不显示历史对话。本配置把
+`agent-shell-session-restore-verbosity` 设为 `'last`：恢复 session 时会回放
+最后一个 prompt turn（用户问题 + agent 回复）；更早的内容会显示为 truncated
+history。需要完整对话时把它改为 `'full`，只显示标题则用 `'minimal`。
 
 - `C-c o n`：创建新的 agent shell，并列出当前项目的已有 session 供选择；
 - 选择已有 session 后，会恢复完整对话历史；
@@ -888,12 +1047,29 @@ Magit 与项目集成：
 
 ## 界面与窗口
 
-`var/init-lisp/init-ui.el` 启用以下内置功能：
+`var/init-lisp/init-ui.el` 启用以下界面功能：
 
 - `which-key`：显示 `C-c`、`C-x`、`gp`、`gr` 等前缀的后续按键；
 - `repeat-mode`：重复执行 `next-error`、`other-window` 等命令；
 - `winner-mode`：撤销/重做窗口布局变化，可用 `C-c <left>` / `C-c <right>`；
-- `pixel-scroll-precision-mode`：在图形界面中启用平滑像素滚动。
+- `ace-window`：按 `M-o` 给窗口加字母标签，按标签即可跳转；只有两个窗口时
+  直接切到另一个；标签字母同时显示在各自窗口的 mode line 上；
+- `pixel-scroll-precision-mode`：在图形界面中启用平滑像素滚动；
+- `C-=` / `C--` / `C-0`：全局放大 / 缩小 / 重置缓冲区文字大小
+  （`text-scale-increase` / `text-scale-decrease` / `text-scale-set 0`）。
+
+### 字体
+
+`var/init-lisp/init-font.el` 把默认字体和中文字体统一为
+**LXGW WenKai Mono GB Screen**（霞鹜文楷等宽 GB 屏幕阅读版）：
+
+- 英文和中文字符使用同一个字体家族，不会出现中英文风格割裂；
+- 该字体是等宽的，并且宽度比为 1:2：一个英文占 0.5em，一个汉字占 1em，
+  所以两个英文字符正好等于一个汉字的宽度，表格、注释和对齐都不会错位；
+- 默认字号为 13pt（`my/font-height` 可调）；LXGW 在相同字号下的
+  x-height 比 JetBrains Maple Mono 小，所以略微放大可以保持可读性；
+- `han` 和 `cjk-misc` 字体集也显式指向该字体，避免中文回退到其他字体；
+- 修改 `my/font-family` 或 `my/font-height` 即可换字体或调整字号。
 
 ## 常用快捷键
 
@@ -929,10 +1105,13 @@ Magit 与项目集成：
 - `var/elpa/`：安装的包
 - `var/eln-cache/`、`eln-cache/`、`*.elc`、`*.eln`：编译产物
 - `var/tree-sitter/`：自动编译的 Tree-sitter 语法库
-- `var/autosave/`、`var/history`、`var/recentf.eld`、`var/saveplace`
-- `var/projects.eld`：project.el 记住的项目列表
-- `var/.org-id-locations`、`var/tramp`、`var/bookmarks`：Org ID、Tramp 连接历史和书签
+- `var/autosave/`、`var/backup/`、`var/history`、`var/recentf.eld`、
+  `var/saveplace`、`var/bookmarks`、`var/abbrev_defs`
+- `var/projects.eld` 及 `var/*.eld`：project.el 等保存的运行时数据
+- `var/.org-id-locations`、`var/tramp`、`var/tramp-autosave/`：Org ID 与 Tramp 数据
 - `var/agent-shell/`、`var/agent/`：OpenCode/agent-shell 的会话记录、截图和全局历史
 - `var/desktop/`：Desktop 会话文件（缓冲区列表和窗口布局）
 - `var/org-roam.db`：从笔记自动生成的数据库
+- `var/ltximg/`：Org 公式预览缓存
+- `var/eshell/`、`var/transient/`、`var/url/`、`var/cache/`：其他运行时数据
 - 顶层遗留的 `elpa/` 目录

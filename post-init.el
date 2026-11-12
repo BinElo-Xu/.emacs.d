@@ -3,6 +3,9 @@
 ;; this file can set the build in buildin theme
 (require 'init-theme)
 
+;; Default font and CJK fontset (LXGW WenKai Mono for mixed text).
+(require 'init-font)
+
 ;; this package ensure ensure that byte-compiled and
 ;; native compailed.
 (require 'init-sysEnv)
@@ -38,6 +41,12 @@
 
 ;; org-mode configuration.
 (require 'init-org)
+
+;; Org LaTeX preview and LaTeX editing (AUCTeX).
+(require 'init-latex)
+
+;; PDF reading with pdf-tools: layout, theme following, and PDF keybindings.
+(require 'init-pdf)
 
 ;; Tree-sitter grammar installation and major-mode remapping.  Language modules
 ;; use `my/treesit-enable' to select their Tree-sitter major mode.

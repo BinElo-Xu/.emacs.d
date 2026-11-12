@@ -15,6 +15,7 @@
 ;;; Code:
 
 (require 'project)
+(require 'subr-x)
 
 (declare-function evil-define-key* "evil"
                   (state keymap key def &rest bindings))

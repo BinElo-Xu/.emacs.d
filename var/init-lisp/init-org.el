@@ -184,13 +184,22 @@
   (org-roam-completion-everywhere t)
   (org-roam-node-display-template "${tags:50} ${title:*}")
 
-  ;; 普通笔记统一创建在 notes/ 子目录。
+  ;; 笔记统一保存在已有的 notes/ 分类目录中，不新建顶层目录。
   (org-roam-capture-templates
-   '(("d" "default" plain
-      "%?"
+   '(("p" "project" plain "%?"
       :target
-      (file+head "notes/${slug}.org"
-                 "#+title: ${title}\n")
+      (file+head "notes/projects/%<%Y%m%d%H%M%S>.org"
+                 "#+title: ${title}\n#+filetags: :Project:")
+      :unnarrowed t)
+     ("l" "literature" plain "%?"
+      :target
+      (file+head "notes/reference/%<%Y%m%d%H%M%S>.org"
+                 "#+title: ${title}\n#+filetags: :Literature:")
+      :unnarrowed t)
+     ("z" "zettel(permanent)" plain "%?"
+      :target
+      (file+head "notes/permanent/%<%Y%m%d%H%M%S>.org"
+                 "#+title: ${title}\n#+filetags: :Permanent:")
       :unnarrowed t)))
 
   :bind
@@ -201,12 +210,14 @@
    ("C-M-i" . completion-at-point))
 
   :config
-  (make-directory
-   (expand-file-name "notes/" org-roam-directory) t)
-  (make-directory
-   (expand-file-name org-roam-dailies-directory
-                     org-roam-directory)
-   t)
+  ;; 只确保现有笔记结构存在：notes/ 及其分类子目录、journal/。
+  ;; 不在 org-roam-directory 顶层创建 projects/、reference/、permanent/。
+  (dolist (dir '("notes/"
+                 "notes/projects/"
+                 "notes/reference/"
+                 "notes/permanent/"
+                 "journal/"))
+    (make-directory (expand-file-name dir org-roam-directory) t))
 
   ;; 首次使用 Org-roam 时开启数据库自动同步。
   (org-roam-db-autosync-mode 1))
@@ -229,10 +240,12 @@
   :bind-keymap
   ("C-c n d" . org-roam-dailies-map)
 
-  :bind
-  (:map org-roam-dailies-map
-        ("Y" . org-roam-dailies-capture-yesterday)
-        ("T" . org-roam-dailies-capture-tomorrow)))
+  :config
+  ;; The standard map is created by org-roam-dailies; add the two extra
+  ;; capture commands after it loads.  `:bind' with `:map' cannot do this
+  ;; because the map does not exist yet when init-org is evaluated.
+  (keymap-set org-roam-dailies-map "Y" #'org-roam-dailies-capture-yesterday)
+  (keymap-set org-roam-dailies-map "T" #'org-roam-dailies-capture-tomorrow))
 
 
 ;; 图谱：按快捷键时才加载并启动。
@@ -277,16 +290,6 @@
 (keymap-global-set "C-c n b" #'consult-org-roam-backlinks)
 (keymap-global-set "C-c n s" #'consult-org-roam-search)
 (keymap-global-set "C-c n u" #'org-roam-ui-mode)
-
-(defvar my/org-roam-dailies-prefix-map
-  (let ((map (make-sparse-keymap)))
-    (keymap-set map "d" #'org-roam-dailies-capture-today)
-    (keymap-set map "Y" #'org-roam-dailies-capture-yesterday)
-    (keymap-set map "T" #'org-roam-dailies-capture-tomorrow)
-    map)
-  "Prefix map for Org-roam dailies, bound to `C-c n d'.")
-
-(keymap-global-set "C-c n d" my/org-roam-dailies-prefix-map)
 
 (provide 'init-org)
 

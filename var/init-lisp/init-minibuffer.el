@@ -12,6 +12,8 @@
 ;;   C-k / C-p / <up>    select the previous candidate (or history entry)
 ;;   C-h / C-l           move one character left / right
 ;;   C-a / C-e           move to the beginning / end of the input
+;;   C-u / C-w / C-r / C-y / C-d / C-t
+;;                       keep their standard editing meanings
 ;;
 ;; After pressing <escape> (which switches the minibuffer to Evil normal
 ;; state) `j' and `k' also select the next and previous candidate, just like
@@ -120,6 +122,44 @@ minibuffer's local map."
                       #'beginning-of-line #'evil-beginning-of-line)
   (my/minibuffer-bind maps (kbd "C-e")
                       #'end-of-line #'evil-end-of-line))
+
+;; Restore standard editing keys that Evil's global insert state would
+;; otherwise replace with Vim commands meant for normal buffers: `C-u'
+;; deletes back to indentation, `C-w' deletes a word, `C-r' pastes from a
+;; register, `C-y' copies from the line above, `C-d' shifts a line left, and
+;; `C-t' shifts it right.  None of those make sense on a one-line prompt.
+(dolist (maps (list my/minibuffer-maps my/vertico-maps))
+  (my/minibuffer-bind maps (kbd "C-u")
+                      #'universal-argument #'universal-argument)
+  (my/minibuffer-bind maps (kbd "C-w")
+                      #'kill-region #'kill-region)
+  (my/minibuffer-bind maps (kbd "C-r")
+                      #'isearch-backward #'isearch-backward)
+  (my/minibuffer-bind maps (kbd "C-y")
+                      #'yank #'yank)
+  (my/minibuffer-bind maps (kbd "C-d")
+                      #'delete-char #'delete-char)
+  (my/minibuffer-bind maps (kbd "C-t")
+                      #'transpose-chars #'transpose-chars))
+
+;; Evil normal state binds TAB (and C-i) to `evil-jump-forward'.  In a
+;; minibuffer TAB must complete or insert the current candidate instead.
+(defun my/minibuffer-insert-tab ()
+  "Insert a literal tab in a plain minibuffer."
+  (interactive)
+  (insert "\t"))
+
+(dolist (map my/minibuffer-maps)
+  (let ((tab (lookup-key map (kbd "TAB"))))
+    (evil-define-key* 'normal map (kbd "TAB")
+                      (cond
+                       ((eq tab #'self-insert-command)
+                        #'my/minibuffer-insert-tab)
+                       (tab tab)
+                       (t #'ignore)))))
+(dolist (map my/vertico-maps)
+  (evil-define-key* 'normal map (kbd "TAB")
+                    (or (lookup-key map (kbd "TAB")) #'vertico-insert)))
 
 ;; Vim-style j/k navigation once the minibuffer is in normal state.
 (dolist (map my/minibuffer-maps)

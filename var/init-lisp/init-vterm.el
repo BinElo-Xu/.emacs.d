@@ -20,6 +20,7 @@
 ;;; Code:
 
 (require 'project)
+(require 'subr-x)
 
 ;; `vterm-buffer-name' is defined by the vterm package, which is loaded
 ;; lazily.  Declare it so the project-specific `let' binding below is dynamic

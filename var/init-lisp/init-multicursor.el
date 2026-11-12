@@ -29,9 +29,9 @@
 ;; key leaves the repeat state.  This is similar to repeating `f'/`F'/`t'/`T'
 ;; with `;'/`,`.
 ;;
-;; `evil-mc' is enabled in programming, configuration, and text buffers
-;; (including Org), where multiple cursors are useful.  It is not enabled in
-;; terminal, REPL, or other special buffers.
+;; `evil-mc' is enabled in programming, configuration, text (including Org),
+;; and Dired buffers, where multiple cursors are useful.  It is not enabled
+;; in terminal, REPL, or other special buffers.
 
 ;;; Code:
 
@@ -98,7 +98,11 @@ pressed."
   :hook
   ((prog-mode . evil-mc-mode)
    (conf-mode . evil-mc-mode)
-   (text-mode . evil-mc-mode))
+   (text-mode . evil-mc-mode)
+   ;; Dired is a special-mode buffer, so it is not covered by the hooks
+   ;; above.  Enable it for selecting/marking multiple file names; use
+   ;; `wdired-mode' when the names need to be edited.
+   (dired-mode . evil-mc-mode))
   :config
   ;; evil-collection sets up `g. n'/`g. N' when evil-mc is loaded.  Replace
   ;; those two commands with count-aware versions; repeat the other bindings

@@ -16,6 +16,20 @@
 - 本表不逐一列出 major mode 自带的大量按键；只列配置相关按键和常用 Evil 默认键。
 - 部分组合键（如 `C-.`、`C-;`）在终端中可能受终端限制，GUI 下正常。
 
+## Evil 初始 state
+
+| 模式 | state | 备注 |
+| --- | --- | --- |
+| `pdf-view-mode` | `normal` | PDF 目录、`pdf-occur` 也是 normal |
+| `org-mode` / `org-agenda-mode` / `org-roam` | `normal` | `TAB` / `S-TAB` 为 Org cycle |
+| `org-capture-mode` | `normal` | 按 `i` 输入；`ZZ` / `ZQ` 完成 / 取消 |
+| `dired-mode` / `wdired-mode` | `normal` | `wdired` 按 `i` 编辑文件名 |
+| `vterm-mode` | `insert` | `ESC` 回 normal |
+| `agent-shell-mode` | `insert` | diff buffer 为 `emacs` state |
+| `magit-mode` 系列 | `normal` | commit message 为 `insert` |
+| `shell-mode` / `eshell-mode` / `comint-mode` | `insert` | 可直接输入命令 |
+| `help-mode` / `occur-mode` / `compilation-mode` | `normal` | 只读或导航 |
+
 ## 高频入口
 
 | 快捷键 | 功能 |
@@ -47,7 +61,7 @@
 | `C-x p` | 全局；Evil 中也可用 | project.el 标准前缀 |
 | `gp` | Evil normal（含 OpenCode/agent-shell 缓冲区） | project.el 前缀别名 |
 | `gr` | Evil normal；仅 Eglot 管理的缓冲区 | Eglot 前缀 |
-| `g.` | Evil normal/visual；编程、配置和文本缓冲区 | evil-mc 多光标命令 |
+| `g.` | Evil normal/visual；编程、配置、文本和 Dired | evil-mc 多光标命令 |
 
 ## 补全与搜索
 
@@ -302,10 +316,15 @@ C/C++ 没有单独的调试快捷键；调试在 Emacs 外部使用 gdb。
 
 | 快捷键 | 功能 |
 | --- | --- |
+| `M-o` | 按标签切换窗口（`ace-window`）；两个窗口时直接切换 |
 | `C-c <left>` / `C-c <right>` | 撤销 / 重做窗口布局变化（`winner-mode`） |
+| `C-=` / `C-+` / `C--` | 放大 / 缩小当前缓冲区的文字 |
+| `C-0` | 重置当前缓冲区的文字大小 |
 
-`which-key` 会在前缀键停顿后自动显示后续按键；`repeat-mode` 用于重复执行
-支持重复的 Emacs 命令。
+`C-=` / `C--` 在 PDF buffer 中改为缩放 PDF 页面；`C-0` 恢复 100%。
+`M-o` 在窗口多于两个时显示 `a`、`s`、`d`、`f` 等标签，按对应字母跳转；标签也会
+显示在各窗口的 mode line 上。`which-key` 会在前缀键停顿后自动显示后续按键；
+`repeat-mode` 用于重复执行支持重复的 Emacs 命令。
 
 ## VTerm 终端
 
@@ -342,8 +361,11 @@ state。要在终端里运行 Vim、SSH 或另一个 Emacs 时，先用 `C-c C-z
 ## 多光标（evil-mc）
 
 `g.` 是 `evil-mc` 多光标前缀，在 Evil normal/visual state 下使用。
-它只在编程、配置和文本（含 Org）缓冲区中自动启用。按键由
+它在编程、配置、文本（含 Org）和 Dired 缓冲区中自动启用。按键由
 `evil-collection` 的 evil-mc 集成提供，默认的直接按键已被清除。
+
+Dired 是只读缓冲区；要批量修改文件名，先用 `C-x C-q` 进入
+`wdired-mode`，改完后按 `C-c C-c` 提交。
 
 | 快捷键 | 功能 |
 | --- | --- |
@@ -403,9 +425,9 @@ OpenCode shell 内部：
 | `C-c C-v` | 选择模型 |
 | `C-c C-m` | 选择 session mode |
 | `C-c C-t` | 选择 thought level |
-| `C-c C-o` | 打开 viewport |
+| `C-c C-o` | 切换到其他 agent-shell 缓冲区 |
+| `C-c o y` | 粘贴；剪贴板是图片时插入图片文件上下文 |
 | `gp ...` | Evil normal state 下的 project.el 前缀，如 `gp f`、`gp p` |
-| `C-y` | 粘贴；剪贴板是图片时插入图片文件上下文 |
 
 OpenCode 缓冲区默认进入 Evil insert state；normal state 下也可以按 `RET` 提交。
 Agent 修改文件时产生的 diff 缓冲区默认进入 Evil Emacs state，可直接使用
@@ -414,14 +436,15 @@ Agent 修改文件时产生的 diff 缓冲区默认进入 Evil Emacs state，可
 `evil-collection` 原本把 agent-shell normal state 的 `gp` 绑成
 `agent-shell-yank-dwim`，会遮住项目前缀并在 kill ring 为空时报
 `Kill ring is empty`。本配置已把 `gp` 恢复为 `project-prefix-map`，与普通
-缓冲区一致；图片粘贴仍使用 `C-y`。
+缓冲区一致；粘贴命令统一使用 `C-c o y`，因为 Evil 在 insert/normal state 中
+分别占用了 `C-y`。
 
 OpenCode 缓冲区通过 ACP 连接，`/` 只补全 `.opencode/commands/` 下的自定义
 命令和内置的 `/compact`；TUI 的 `/new`、`/sessions`、`/undo` 等命令不可用。
 
-`C-c o n` 会列出当前项目的已有 session；选择后会恢复该 session 的完整对话
-历史（`agent-shell-session-restore-verbosity` 为 `'full`）。如果希望自动恢复
-最近一次会话，可设置：
+`C-c o n` 会列出当前项目的已有 session；选择后会恢复该 session 的最后一个
+prompt turn（`agent-shell-session-restore-verbosity` 为 `'last`）。需要完整
+历史时把它设为 `'full`。如果希望自动恢复最近一次会话，可设置：
 
 ```elisp
 (setq agent-shell-session-strategy 'latest)
@@ -441,7 +464,7 @@ Magit 缓冲区中的常用 Evil 键（由 `evil-collection` 提供）：
 | --- | --- |
 | `s` / `u` | 暂存 / 取消暂存 |
 | `c` | 提交 |
-| `P` / `p` | 推送 |
+| `P` | 推送 |
 | `f` / `F` | 获取 / 拉取 |
 | `l` | 查看日志 |
 | `d` | 查看 diff |
@@ -505,6 +528,76 @@ Agenda 中：
 | `C-c n d Y` | capture 昨天的日记（自定义） |
 | `C-c n d T` | capture 明天的日记（自定义） |
 
+### Org-roam capture 模板
+
+`M-x org-roam-capture` 选择模板：
+
+| 键 | 模板 | 保存位置 |
+| --- | --- | --- |
+| `p` | project | `~/Notes/notes/projects/` |
+| `l` | literature | `~/Notes/notes/reference/` |
+| `z` | zettel(permanent) | `~/Notes/notes/permanent/` |
+
+文件名为 `%Y%m%d%H%M%S.org`，不会在 `~/Notes/` 顶层新建额外目录。
+
+## LaTeX、PDF 与 Org 公式
+
+### PDF（pdf-tools）
+
+PDF 使用 `pdf-tools` 打开，配置位于 `var/init-lisp/init-pdf.el`。normal state
+下常用按键：
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `j` / `k` | 向下 / 向上滚动一行，到页边继续翻页 |
+| `C-j` / `C-k` | 直接跳到下一页 / 上一页 |
+| `SPC` / `S-SPC`（或 `C-f` / `C-b`） | 向下 / 向上滚动，可在页边翻页 |
+| `gg` / `G` 或 `M-<` / `M->` | 第一页 / 最后一页 |
+| `P` | 适合整页 |
+| `/` | 搜索文本 |
+| `n` / `N` | 下一个 / 上一个搜索结果 |
+| `M-s o` | `pdf-occur` 搜索结果列表 |
+| `o` | 目录（outline） |
+| `f` / `F` | 跟随链接 / 执行链接动作 |
+| `Q` | 关闭 PDF 缓冲区 |
+| `z0` / `C-0` | 恢复按页面宽度显示 |
+| `C-=` / `C-+` / `C--` | 放大 / 缩小 PDF 页面 |
+
+PDF 默认按**页面宽度**（`fit-width`）排版，纵向分屏不会把整页缩小。`W` / `H` 的
+PDF 专用绑定已解除，现在分别是 Evil 的 `evil-forward-WORD-begin` 和
+`evil-window-top`；需要整页显示时按 `P`。
+
+PDF 页面颜色跟随 Emacs 主题；切换主题时已打开的 PDF 会自动刷新。
+`pdf-tools` 和其它 Emacs PDF 阅读器一样是按页显示的；`pdf-view-continuous` 已
+开启，滚动到页边会继续翻页，通常用一个 buffer 即可。需要连续多页并排显示时建议
+使用外部 PDF 阅读器。
+
+### Org 公式
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c C-x C-l` | 手动切换公式预览 |
+| `org-fragtog-mode` | 光标离开公式时自动渲染，进入时显示源码 |
+| `org-cdlatex-mode` | Org 公式中的 CDLaTeX 数学输入辅助 |
+
+在公式中，`'`、`^`、`_`、`` ` `` 等键会用于输入 LaTeX 数学结构；离开公式后
+恢复普通编辑。
+
+### LaTeX（AUCTeX）
+
+| 快捷键 | 功能 |
+| --- | --- |
+| `C-c C-c` | 编译当前文档 |
+| `C-c C-v` | 在 pdf-tools 中查看 PDF |
+| `C-c C-e` | 插入 LaTeX 环境 |
+| `C-c C-s` | 插入章节 |
+| `C-c C-m` | 插入宏 |
+| `C-c [` | RefTeX 引用 |
+| `C-c )` | RefTeX 交叉引用 |
+| `C-c (` | RefTeX 标签 |
+
+默认使用 XeLaTeX；`C-c C-v` 通过 SyncTeX 跳到 PDF 对应位置。
+
 ## Minibuffer、Ex 与 Search
 
 ### 普通 minibuffer / Vertico
@@ -517,9 +610,17 @@ Agenda 中：
 | `C-l` | 向右移动一个字符 |
 | `C-a` | 移动到输入开头 |
 | `C-e` | 移动到输入末尾 |
+| `C-u` | `universal-argument` |
+| `C-w` | `kill-region` |
+| `C-r` | `isearch-backward` |
+| `C-y` | `yank` |
+| `C-d` | `delete-char` |
+| `C-t` | `transpose-chars` |
+| `TAB` / `C-i` | 补全；Vertico 中插入当前候选；普通 read-string 中插入 tab |
 | `RET` | 接受当前候选并退出 |
 
-在 minibuffer 中按 `ESC` 进入 Evil normal state 后，`j` / `k` 也用于下一个 / 上一个候选。
+在 minibuffer 中按 `ESC` 进入 Evil normal state 后，`j` / `k` 也用于下一个 /
+上一个候选，`TAB` 完成补全或插入当前候选。
 
 ### Ex 命令行和搜索提示
 

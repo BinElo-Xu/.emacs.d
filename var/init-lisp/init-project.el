@@ -17,6 +17,7 @@
 ;;; Code:
 
 (require 'project)
+(require 'subr-x)
 
 ;;; Project registry
 
